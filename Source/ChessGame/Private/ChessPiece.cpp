@@ -38,3 +38,15 @@ void AChessPiece::OnConstruction(const FTransform& Transform)
 		PieceMesh->SetRelativeScale3D({15.f,15.f,15.f,});
 	}
 }
+
+void AChessPiece::OnSelected()
+{
+}
+
+void AChessPiece::OnDeselected()
+{
+}
+
+void AChessPiece::Promote(TSubclassOf<AChessPiece> NewPieceClass)
+{
+}

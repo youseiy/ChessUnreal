@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChessPieceInterface.h"
 #include "GameFramework/Actor.h"
 #include "ChessPiece.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class CHESSGAME_API AChessPiece : public AActor
 {
 	GENERATED_BODY()
@@ -17,21 +18,20 @@ class CHESSGAME_API AChessPiece : public AActor
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,meta=(AllowPrivateAccess))
 	TObjectPtr<UStaticMeshComponent> PieceMesh;
 
+	//todo:make this work
 	UPROPERTY(EditAnywhere)
 	uint8 InitBoardID;
-	
 	uint8 CurrentBoardID;
 	
-
 public:
-	// Sets default values for this actor's properties
 	AChessPiece();
-
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 	virtual void OnConstruction(const FTransform& Transform) override;
 public:
+	void OnSelected();
+	void OnDeselected();
+	void Promote(TSubclassOf<AChessPiece> NewPieceClass);
+
 	
 };

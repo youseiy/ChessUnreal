@@ -3,6 +3,7 @@
 
 #include "ChessGame/Public/ChessBoard.h"
 
+#include "ChessPiecesSet.h"
 #include "ChessGame/Public/ChessPiece.h"
 #include "ChessGame/Public/ChessTile.h"
 #include "Kismet/GameplayStatics.h"
@@ -24,6 +25,35 @@ void AChessBoard::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (HasAuthority())
+	{
+		BuildBoard();
+	}
+
+	
+}
+void AChessBoard::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	
+	
+}
+
+TSubclassOf<AChessPiece> AChessBoard::GetPieceClass(int32 Index, bool bIsWhite) const
+{
+	switch (Index)
+	{
+	case 0: case 7: return bIsWhite ? WhitePiecesSet->Rook: BlackPiecesSet->Rook;
+	case 1: case 6: return bIsWhite ? WhitePiecesSet->Knight : BlackPiecesSet->Knight;
+	case 2: case 5: return bIsWhite ?  WhitePiecesSet->Bishop :  BlackPiecesSet->Bishop;
+	case 3: return bIsWhite ? WhitePiecesSet->Queen : BlackPiecesSet->Queen;
+	case 4: return bIsWhite ? WhitePiecesSet->King : BlackPiecesSet->King;
+	default: return nullptr;
+	}
+}
+
+void AChessBoard::BuildBoard()
+{
 	constexpr int32 X{8};
 	constexpr int32 Y{8};
 	
@@ -52,6 +82,12 @@ void AChessBoard::BeginPlay()
 
 			Tiles.Emplace(Tile);
 
+			
+			Tile->FinishSpawning(SpawnTrans);
+
+			DrawDebugString(GetWorld(),Tile->GetActorLocation(),FString::Printf(TEXT("Tile ID: X: %ls %ls"),*FString::SanitizeFloat(OuterIndex,0),*FString::SanitizeFloat(InnerIndex,0)),nullptr,FColor::Blue,5.f,false,1);
+			Tile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
+			
 			if ((OuterIndex + InnerIndex) % 2 == 0)
 			{
 				WhiteTiles.Emplace(Tile);
@@ -61,18 +97,32 @@ void AChessBoard::BeginPlay()
 				BlackTiles.Emplace(Tile);
 			}
 			
-			Tile->FinishSpawning(SpawnTrans);
+			// Determine chess piece
+			TSubclassOf<AChessPiece> PieceClass = nullptr;
 
-			DrawDebugString(GetWorld(),Tile->GetActorLocation(),FString::Printf(TEXT("Tile ID: X: %ls %ls"),*FString::SanitizeFloat(OuterIndex,0),*FString::SanitizeFloat(InnerIndex,0)),nullptr,FColor::Blue,5.f,false,1);
-			Tile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
+			if (OuterIndex == 1)
+			{
+				PieceClass = WhitePiecesSet->Pawn;
+			}
+			else if (OuterIndex == 6)
+			{
+				PieceClass = BlackPiecesSet->Pawn;
+			}
+			else if (OuterIndex == 0 || OuterIndex == 7)
+			{
+				bool bIsWhite = (OuterIndex == 0);
+				PieceClass = GetPieceClass(InnerIndex, bIsWhite);
+			}
+			
+
+			// Spawn chess piece if applicable
+			if (PieceClass)
+			{
+				AChessPiece* Piece = GetWorld()->SpawnActor<AChessPiece>(PieceClass, Tile->GetActorLocation(), FRotator::ZeroRotator);
+				Piece->AttachToActor(Tile, FAttachmentTransformRules::SnapToTargetIncludingScale);
+			}
 		}
 	}
 	UE_LOGFMT(LogTemp,Warning,"Chess board has {a} Tiles, {b} Black and {c} White",Tiles.Num(),WhiteTiles.Num(),BlackTiles.Num());
-}
-void AChessBoard::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-	
-	
 }
 

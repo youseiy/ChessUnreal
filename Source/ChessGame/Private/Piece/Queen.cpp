@@ -1,29 +1,26 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ChessGame/Public/ChessTile.h"
+#include "Piece/Queen.h"
 
 
 // Sets default values
-AChessTile::AChessTile()
+AQueen::AQueen()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-
-	TileMesh=CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
-
-	RootComponent=TileMesh;
-
-
-	SetReplicates(true);
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
-void AChessTile::BeginPlay()
+void AQueen::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-
+// Called every frame
+void AQueen::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
 

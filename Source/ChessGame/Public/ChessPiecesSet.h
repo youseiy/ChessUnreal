@@ -14,7 +14,11 @@ UCLASS()
 class CHESSGAME_API UChessPiecesSet : public UDataAsset
 {
 	GENERATED_BODY()
+
+
+
 	
+public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AChessPiece> King;
 	UPROPERTY(EditAnywhere)

@@ -42,6 +42,10 @@ class CHESSGAME_API AChessBoard : public AActor
 	 int32 NumSquares{64};
 
 	virtual void OnConstruction(const FTransform& Transform) override;
+
+	TSubclassOf<class AChessPiece> GetPieceClass(int32 Index, bool bIsWhite) const;
+
+	void BuildBoard();
 public:
 	// Sets default values for this actor's properties
 	AChessBoard();
@@ -49,4 +53,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	
+	
 };
