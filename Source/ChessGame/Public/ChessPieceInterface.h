@@ -23,8 +23,8 @@ class CHESSGAME_API IChessPieceInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual TArray<FVector> GetValidMoves() const=0;
-	virtual void MoveTo(const FVector& NewPosition)=0;
+	virtual TArray<class AChessTile*> GetValidMoves() const=0;
+	virtual void MoveTo(AChessTile* NewPosition)=0;
 	virtual void Capture(class AChessPiece* TargetPiece)=0;
 	virtual bool IsMoveValid(const FVector& NewPosition) const=0;
 };

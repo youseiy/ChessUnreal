@@ -46,14 +46,11 @@ class CHESSGAME_API AChessBoard : public AActor
 	TSubclassOf<class AChessPiece> GetPieceClass(int32 Index, bool bIsWhite) const;
 
 	void BuildBoard();
-public:
-	// Sets default values for this actor's properties
-	AChessBoard();
-
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+public:
+	AChessBoard();
 	
+	const TArray<AChessTile*>& GetTiles()const{return Tiles;}
 	
 };

@@ -11,14 +11,13 @@ AChessPiece::AChessPiece()
 	PrimaryActorTick.bCanEverTick = false;
 	
 	PieceRoot=CreateDefaultSubobject<USceneComponent>("PieceRoot");
-
 	PieceMesh=CreateDefaultSubobject<UStaticMeshComponent>("PieceMesh");
 
 	RootComponent=PieceRoot;
 	PieceMesh->SetupAttachment(GetRootComponent());
 
-
-	SetReplicates(true);
+	PieceMesh->SetCollisionProfileName("ChessPiece");
+	bReplicates=true;
 }
 
 // Called when the game starts or when spawned
@@ -32,7 +31,7 @@ void AChessPiece::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	//fix piece scale
+	//fix model scale
 	if (IsValid(PieceMesh))
 	{
 		PieceMesh->SetRelativeScale3D({15.f,15.f,15.f,});
@@ -41,6 +40,7 @@ void AChessPiece::OnConstruction(const FTransform& Transform)
 
 void AChessPiece::OnSelected()
 {
+	
 }
 
 void AChessPiece::OnDeselected()

@@ -3,6 +3,7 @@
 
 #include "ChessGame/Public/ChessBoard.h"
 
+#include "ChessGameMode.h"
 #include "ChessPiecesSet.h"
 #include "ChessGame/Public/ChessPiece.h"
 #include "ChessGame/Public/ChessTile.h"
@@ -17,7 +18,7 @@ AChessBoard::AChessBoard()
 	PrimaryActorTick.bCanEverTick = false;
 
 
-	SetReplicates(true);
+	bReplicates=true;
 }
 
 // Called when the game starts or when spawned
@@ -27,6 +28,8 @@ void AChessBoard::BeginPlay()
 
 	if (HasAuthority())
 	{
+		//todo:refactor
+		Cast<AChessGameMode>(UGameplayStatics::GetGameMode(this))->ChessBoard=this;;
 		BuildBoard();
 	}
 
@@ -79,12 +82,12 @@ void AChessBoard::BuildBoard()
 			TSubclassOf<AChessTile> TileClass = ((OuterIndex + InnerIndex) % 2 == 0) ? WhiteTile : BlackTile;
 
 			auto* Tile = GetWorld()->SpawnActorDeferred<AChessTile>(TileClass, SpawnTrans);
-
+			Tile->SetBoardID({static_cast<float>(OuterIndex),static_cast<float>(InnerIndex)});
+			
 			Tiles.Emplace(Tile);
-
 			
 			Tile->FinishSpawning(SpawnTrans);
-
+			
 			DrawDebugString(GetWorld(),Tile->GetActorLocation(),FString::Printf(TEXT("Tile ID: X: %ls %ls"),*FString::SanitizeFloat(OuterIndex,0),*FString::SanitizeFloat(InnerIndex,0)),nullptr,FColor::Blue,5.f,false,1);
 			Tile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
 			
@@ -107,6 +110,7 @@ void AChessBoard::BuildBoard()
 			else if (OuterIndex == 6)
 			{
 				PieceClass = BlackPiecesSet->Pawn;
+				
 			}
 			else if (OuterIndex == 0 || OuterIndex == 7)
 			{
@@ -119,6 +123,10 @@ void AChessBoard::BuildBoard()
 			if (PieceClass)
 			{
 				AChessPiece* Piece = GetWorld()->SpawnActor<AChessPiece>(PieceClass, Tile->GetActorLocation(), FRotator::ZeroRotator);
+				
+				FVector2D BoardID{static_cast<float>(OuterIndex),static_cast<float>(InnerIndex)};
+				Piece->SetInitBoardID(BoardID);
+				Tile->SetChessPiece(Piece);
 				Piece->AttachToActor(Tile, FAttachmentTransformRules::SnapToTargetIncludingScale);
 			}
 		}
