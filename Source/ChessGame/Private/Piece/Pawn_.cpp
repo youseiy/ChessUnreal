@@ -49,7 +49,6 @@ TArray<AChessTile*> APawn_::GetValidMoves() const
 						break;
 					}
 				}
-				
 			}
 			return ValidTiles;
 		}
@@ -77,6 +76,8 @@ void APawn_::MoveTo(AChessTile* NewPosition)
 	
 	bAlreadyMoved=true;
 	SetCurrentBoardID(NewPosition->GetTileID());
+
+	
 	SetActorLocation(NewPosition->GetActorLocation());
 	NewPosition->SetChessPiece(this);
 
