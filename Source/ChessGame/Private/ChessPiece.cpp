@@ -3,7 +3,10 @@
 
 #include "ChessGame/Public/ChessPiece.h"
 
+#include "ChessGame/ChessGame.h"
+#include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
+
 
 
 // Sets default values
@@ -22,18 +25,10 @@ AChessPiece::AChessPiece()
 	bReplicates=true;
 }
 
-void AChessPiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AChessPiece::PostInitializeComponents()
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AChessPiece,ValidMoves)
-	DOREPLIFETIME(AChessPiece,InitBoardID)
-	DOREPLIFETIME(AChessPiece,CurrentBoardID)
-}
+	Super::PostInitializeComponents();
 
-// Called when the game starts or when spawned
-void AChessPiece::BeginPlay()
-{
-	Super::BeginPlay();
 	
 }
 
@@ -48,10 +43,85 @@ void AChessPiece::OnConstruction(const FTransform& Transform)
 	}
 }
 
+void AChessPiece::SetInitBoardID(const FVector2D& BoardID)
+{
+	InitBoardID=BoardID;
+	SetCurrentBoardID(BoardID);
+}
+
+void AChessPiece::SetCurrentBoardID(const FVector2D& BoardID)
+{
+	CurrentBoardID=BoardID;
+}
+
+// Called when the game starts or when spawned
+void AChessPiece::BeginPlay()
+{
+	Super::BeginPlay();
+	OnPieceCaptured.BindUObject(this,&AChessPiece::OnPieceCapturedCallback);
+}
+
+void AChessPiece::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	OnPieceCaptured.Unbind();
+}
+
+void AChessPiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AChessPiece,ValidMoves)
+	DOREPLIFETIME(AChessPiece,InitBoardID)
+	DOREPLIFETIME(AChessPiece,CurrentBoardID)
+}
 void AChessPiece::Server_Capture_Implementation(AChessPiece* TargetPiece)
 {
+	if (TargetPiece->OnPieceCaptured.ExecuteIfBound())
+	{
+		UE_LOGFMT(LogChessGame,Warning,"ChessPiece {a} captured {b}",GetName(),TargetPiece->GetName());
+	}
+	
 }
 
 void AChessPiece::Server_TryMoveTo_Implementation(AChessTile* NewPosition)
 {
+	
+}
+void AChessPiece::AnimatedTranslation(const FVector& Target)
+{
+	if (!GetWorld()) return;
+	
+
+	GetWorld()->GetTimerManager().SetTimer(AnimationTimerHandle,FTimerDelegate::CreateWeakLambda(this,[Target,this]()
+	{
+		FVector StartLoc{GetActorLocation()};
+		FVector ToTarget{FMath::VInterpTo( StartLoc,Target,GetWorld()->GetDeltaSeconds(),10.f)};
+		
+		SetActorLocation(ToTarget);
+		if (GetActorLocation().Equals(Target,0.1f))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(AnimationTimerHandle);
+		}
+		
+	}),1.f/60.f,true);
+}
+
+void AChessPiece::OnPieceCapturedCallback()
+{
+	
+	GetWorld()->GetTimerManager().SetTimer(AnimationTimerHandle,FTimerDelegate::CreateWeakLambda(this,[this]()
+	{
+		FVector StartLoc{GetActorLocation()};
+		FVector Target{StartLoc+FVector{0.f,0.f,150.f}};
+		FVector ToTarget{FMath::VInterpTo( StartLoc,Target,GetWorld()->GetDeltaSeconds(),15.f)};
+		
+		SetActorLocation(ToTarget);
+		if (GetActorLocation().Equals(Target,0.1f))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(AnimationTimerHandle);
+			SetLifeSpan(0.1);
+		}
+		
+	}),1.f/60.f,true);
 }

@@ -19,33 +19,34 @@ protected:
 	UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess))
 	bool bIsWhite=false;
 	
-	//todo:make this work
 	UPROPERTY(Replicated)
 	FVector2D InitBoardID;
 	UPROPERTY(Replicated)
 	FVector2D CurrentBoardID;
 	UPROPERTY(Replicated)
 	TArray<AChessTile*> ValidMoves;
+
+	FTimerHandle AnimationTimerHandle;
+	virtual void AnimatedTranslation(const FVector& Target);
+
+	void OnPieceCapturedCallback();
 public:
 	AChessPiece();
 protected:
-	
+	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 public:
+	DECLARE_DELEGATE(FOnPieceCaptured)
+	FOnPieceCaptured OnPieceCaptured;
+	
+	
 	virtual void UpdateValidMoves() {}
 	const TArray<AChessTile*>& GetValidMoves() const{return ValidMoves;}
-	void SetInitBoardID(const FVector2D& BoardID)
-	{
-		InitBoardID=BoardID;
-		SetCurrentBoardID(BoardID);
-	};
-	void SetCurrentBoardID(const FVector2D& BoardID)
-	{
-		CurrentBoardID=BoardID;
-	};
-	
+	void SetInitBoardID(const FVector2D& BoardID);
+	void SetCurrentBoardID(const FVector2D& BoardID);
 	bool GetIsWhite()const {return bIsWhite;}
 
 	

@@ -61,10 +61,10 @@ protected:
 	virtual void SetupInputComponent() override;
 public:
 	AChessPlayerController();
-	
 	AChessTile* GetCurrentHoveredTile()const{return HoveredTile;}
-	
 	UFUNCTION(Server,Reliable)
 	void Server_MovePiece(AChessPiece* Piece, AChessTile* Tile);
+	UFUNCTION(Server,Reliable)
+	void Server_CapturePiece(AChessPiece* Piece, AChessPiece* CapturedPiece);
 	
 };

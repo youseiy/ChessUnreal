@@ -50,7 +50,7 @@ void AChessTile::SetBoardID(const FVector2D& ID)
 void AChessTile::ShowShader()
 {
 	PlaneShaderMesh->SetVisibility(true);
-	PlaneShaderMesh->SetMaterial(0,GreenMaterialInstance);
+	PlaneShaderMesh->SetMaterial(0,IsOccupied()?RedMaterialInstance:GreenMaterialInstance);
 }
 
 void AChessTile::DisableShader()

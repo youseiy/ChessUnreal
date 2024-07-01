@@ -18,6 +18,8 @@ AChessPlayerController::AChessPlayerController()
 	bReplicates=true;
 }
 
+
+
 void AChessPlayerController::Server_MovePiece_Implementation(AChessPiece* Piece, AChessTile* Tile)
 {
 	GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->Server_RequestChessPieceMove(Piece,Tile);
@@ -64,6 +66,7 @@ void AChessPlayerController::BeginPlay()
 					for (auto& Tile : ValidMoves)
 					{
 						Tile->ShowShader();
+						
 					}
 					
 				}
@@ -151,11 +154,13 @@ void AChessPlayerController::Select(const FInputActionValue& Value)
 		{
 			if (Moves.Contains(HitResult.GetActor()) && HitResult.GetActor()!=CurrentTile)
 			{
-				//Server_RequestPieceOwnership( ChessPieceOnTile,this);
-				
-				//ChessPieceOnTile->Server_TryMoveTo(Cast<AChessTile>(HitResult.GetActor()));
-				
+				if (Cast<AChessTile>(HitResult.GetActor())->IsOccupied())
+				{
+					Server_CapturePiece(ChessPieceOnTile, Cast<AChessTile>(HitResult.GetActor())->GetChessPiece());
 					Server_MovePiece(ChessPieceOnTile,Cast<AChessTile>(HitResult.GetActor()));
+				}
+				
+				Server_MovePiece(ChessPieceOnTile,Cast<AChessTile>(HitResult.GetActor()));
 				
 			
 				
@@ -165,6 +170,10 @@ void AChessPlayerController::Select(const FInputActionValue& Value)
 		}
 	}
 	
+}
+void AChessPlayerController::Server_CapturePiece_Implementation(AChessPiece* Piece, AChessPiece* CapturedPiece)
+{
+	CapturedPiece->OnPieceCaptured.ExecuteIfBound();
 }
 void AChessPlayerController::Client_TileHit_Implementation(const FHitResult& TileHitResult)
 {

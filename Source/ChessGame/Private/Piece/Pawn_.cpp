@@ -85,13 +85,13 @@ void APawn_::Server_TryMoveTo_Implementation(AChessTile* NewPosition)
 {
 	Super::Server_TryMoveTo_Implementation(NewPosition);
 
-	//todo: make lerp anim
 	
 	bAlreadyMoved=true;
 	SetCurrentBoardID(NewPosition->GetTileID());
-	SetActorLocation(NewPosition->GetActorLocation());
+	AnimatedTranslation(NewPosition->GetActorLocation());
 	NewPosition->SetChessPiece(this);
 	UpdateValidMoves();
+	
 }
 
 
