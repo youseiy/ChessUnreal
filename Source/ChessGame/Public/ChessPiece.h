@@ -18,16 +18,24 @@ protected:
 	TObjectPtr<UStaticMeshComponent> PieceMesh;
 	UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess))
 	bool bIsWhite=false;
-	//todo:make this work
 	
+	//todo:make this work
+	UPROPERTY(Replicated)
 	FVector2D InitBoardID;
+	UPROPERTY(Replicated)
 	FVector2D CurrentBoardID;
+	UPROPERTY(Replicated)
+	TArray<AChessTile*> ValidMoves;
 public:
 	AChessPiece();
 protected:
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 public:
+	virtual void UpdateValidMoves() {}
+	const TArray<AChessTile*>& GetValidMoves() const{return ValidMoves;}
 	void SetInitBoardID(const FVector2D& BoardID)
 	{
 		InitBoardID=BoardID;
@@ -37,10 +45,13 @@ public:
 	{
 		CurrentBoardID=BoardID;
 	};
+	
 	bool GetIsWhite()const {return bIsWhite;}
-	void OnSelected();
-	void OnDeselected();
-	void Promote(TSubclassOf<AChessPiece> NewPieceClass);
 
 	
+	
+	UFUNCTION(Server,Reliable)
+	void Server_TryMoveTo(class AChessTile* NewPosition);
+	UFUNCTION(Server,Reliable)
+	void Server_Capture(class AChessPiece* TargetPiece);
 };

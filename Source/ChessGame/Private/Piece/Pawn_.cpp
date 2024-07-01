@@ -6,7 +6,10 @@
 #include "ChessBoard.h"
 #include "ChessGameMode.h"
 #include "ChessTile.h"
+#include "ChessGame/ChessGame.h"
 #include "Kismet/GameplayStatics.h"
+#include "Logging/StructuredLog.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values
@@ -21,71 +24,53 @@ void APawn_::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-	
-	
-}
-
-TArray<AChessTile*> APawn_::GetValidMoves() const
-{
-	//todo:otimize the code to use a inverse loop for black and normal loop for white
 	if (HasAuthority())
 	{
-		const auto& Tiles=Cast<AChessGameMode>(UGameplayStatics::GetGameMode(this))->ChessBoard->GetTiles();
-
-		TArray<AChessTile*> ValidTiles;
-		
-		//White we increase X to find the valid tiles
-		if (GetIsWhite())
-		{
-			for (const auto& Tile: Tiles)
-			{
-				if (Tile->GetTileID()==FVector2D{CurrentBoardID.X+1,CurrentBoardID.Y} || Tile->GetTileID()==FVector2D{CurrentBoardID.X+2,CurrentBoardID.Y} )
-				{
-					ValidTiles.Emplace(Tile);
-
-					if (bAlreadyMoved && ValidTiles.Num()>=1)
-					{
-						break;
-					}
-				}
-			}
-			return ValidTiles;
-		}
-		for (const auto& Tile: Tiles)
-		{
-			if (Tile->GetTileID()==FVector2D{CurrentBoardID.X-1,CurrentBoardID.Y} || Tile->GetTileID()==FVector2D{CurrentBoardID.X-2,CurrentBoardID.Y} )
-			{
-				ValidTiles.Emplace(Tile);
-
-				if (bAlreadyMoved && ValidTiles.Num()>=1)
-				{
-					break;
-				}
-			}
-				
-		}
-		return ValidTiles;
+		UpdateValidMoves();
+		UE_LOGFMT(LogChessGame,Warning,"Current valid moves: {a}",ValidMoves.Num());
 	}
-	return {};
+	
+	
 }
 
+void APawn_::UpdateValidMoves()
+{
+	//this is only on the server
+	auto* ChessGameMode = Cast<AChessGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!IsValid(ChessGameMode) || !IsValid(ChessGameMode->ChessBoard))
+	{
+		return;
+	}
+
+	auto& Tiles = ChessGameMode->ChessBoard->GetTiles();
+	ValidMoves.Empty();
+
+	FVector2D OneStep = { CurrentBoardID.X + (GetIsWhite() ? 1 : -1), CurrentBoardID.Y };
+	FVector2D TwoStep = { CurrentBoardID.X + 2 * (GetIsWhite() ? 1 : -1), CurrentBoardID.Y };
+
+	// Iterate over tiles to find valid moves
+	for (const auto& Tile : Tiles)
+	{
+		FVector2D TileID = Tile->GetTileID();
+
+		if (TileID == OneStep || (TileID == TwoStep && !bAlreadyMoved))
+		{
+			ValidMoves.Add(Tile);
+
+			if (bAlreadyMoved && ValidMoves.Num() >= 1)
+			{
+				break;
+			}
+		}
+	}
+}
 void APawn_::MoveTo(AChessTile* NewPosition)
 {
 	if (!HasAuthority()) return;
 	
-	bAlreadyMoved=true;
-	SetCurrentBoardID(NewPosition->GetTileID());
+	
 
-	
-	SetActorLocation(NewPosition->GetActorLocation());
-	NewPosition->SetChessPiece(this);
-
-	
-	
-	
 }
-
 void APawn_::Capture(AChessPiece* TargetPiece)
 {
 	
@@ -95,4 +80,18 @@ bool APawn_::IsMoveValid(const FVector& NewPosition) const
 {
 	return false;
 }
+
+void APawn_::Server_TryMoveTo_Implementation(AChessTile* NewPosition)
+{
+	Super::Server_TryMoveTo_Implementation(NewPosition);
+
+	//todo: make lerp anim
+	
+	bAlreadyMoved=true;
+	SetCurrentBoardID(NewPosition->GetTileID());
+	SetActorLocation(NewPosition->GetActorLocation());
+	NewPosition->SetChessPiece(this);
+	UpdateValidMoves();
+}
+
 

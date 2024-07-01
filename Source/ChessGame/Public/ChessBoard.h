@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChessTile.h"
 #include "GameFramework/Actor.h"
 #include "ChessBoard.generated.h"
 
@@ -37,20 +38,24 @@ class CHESSGAME_API AChessBoard : public AActor
 
 	UPROPERTY()
 	TArray<AChessTile*> BlackTiles;
-
 	
-	 int32 NumSquares{64};
-
-	virtual void OnConstruction(const FTransform& Transform) override;
+	UPROPERTY()
+	TArray<AChessPiece*> Pieces;
+	
 
 	TSubclassOf<class AChessPiece> GetPieceClass(int32 Index, bool bIsWhite) const;
 
 	void BuildBoard();
+	TSubclassOf<AChessPiece> EvaluatePieceClass(int32 OuterIndex, int32 InnerIndex);
+	AChessPiece* InitChessPiece(const TSubclassOf<AChessPiece>& PieceClass,AChessTile& OwnerTile,const FVector& Location,const  FVector2D& BoardID);
+	AChessTile* InitChessTile(TSubclassOf<AChessTile> TileClass,const FTransform& Location);
 protected:
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 public:
 	AChessBoard();
+	const TArray<AChessTile*>& GetTiles()const {return Tiles;}
 	
-	const TArray<AChessTile*>& GetTiles()const{return Tiles;}
-	
+	UFUNCTION(Server,Reliable)
+	void Server_RequestChessPieceMove(AChessPiece* Piece,AChessTile* Tile);
 };

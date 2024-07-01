@@ -3,6 +3,8 @@
 
 #include "ChessGame/Public/ChessPiece.h"
 
+#include "Net/UnrealNetwork.h"
+
 
 // Sets default values
 AChessPiece::AChessPiece()
@@ -18,6 +20,14 @@ AChessPiece::AChessPiece()
 
 	PieceMesh->SetCollisionProfileName("ChessPiece");
 	bReplicates=true;
+}
+
+void AChessPiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AChessPiece,ValidMoves)
+	DOREPLIFETIME(AChessPiece,InitBoardID)
+	DOREPLIFETIME(AChessPiece,CurrentBoardID)
 }
 
 // Called when the game starts or when spawned
@@ -38,15 +48,10 @@ void AChessPiece::OnConstruction(const FTransform& Transform)
 	}
 }
 
-void AChessPiece::OnSelected()
-{
-	
-}
-
-void AChessPiece::OnDeselected()
+void AChessPiece::Server_Capture_Implementation(AChessPiece* TargetPiece)
 {
 }
 
-void AChessPiece::Promote(TSubclassOf<AChessPiece> NewPieceClass)
+void AChessPiece::Server_TryMoveTo_Implementation(AChessTile* NewPosition)
 {
 }

@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "ChessPlayerController.generated.h"
 
+class AChessPiece;
 struct FInputActionValue;
 
 /**
@@ -30,7 +31,7 @@ class CHESSGAME_API AChessPlayerController : public APlayerController
 	TObjectPtr<class UInputAction> CancelAction;
 
 
-	FTimerHandle TileTime;
+	FTimerHandle TileTimer;
 	UPROPERTY()
 	class AChessTile* HoveredTile;
 	UPROPERTY()
@@ -52,6 +53,8 @@ class CHESSGAME_API AChessPlayerController : public APlayerController
 	void Server_RequestTile();
 	UFUNCTION(Client,Reliable)
 	void Client_TileHit(const FHitResult& TileHitResult);
+	UFUNCTION(Client,Reliable)
+	void Server_RequestPieceOwnership(AChessPiece* ChessPiece, APlayerController* PC);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -60,4 +63,8 @@ public:
 	AChessPlayerController();
 	
 	AChessTile* GetCurrentHoveredTile()const{return HoveredTile;}
+	
+	UFUNCTION(Server,Reliable)
+	void Server_MovePiece(AChessPiece* Piece, AChessTile* Tile);
+	
 };

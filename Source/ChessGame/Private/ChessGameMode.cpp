@@ -9,6 +9,7 @@
 #include "ChessGame/ChessGame.h"
 #include "Logging/StructuredLog.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogChessGameMode,All,All);
 
 AChessGameMode::AChessGameMode()
 {
@@ -16,8 +17,16 @@ AChessGameMode::AChessGameMode()
 	PlayerControllerClass=AChessPlayerController::StaticClass();
 }
 
+void AChessGameMode::GameWelcomePlayer(UNetConnection* Connection, FString& RedirectURL)
+{
+	Super::GameWelcomePlayer(Connection, RedirectURL);
+
+	UE_LOGFMT(LogChessGameMode,Warning,"Welcome {a}",Connection->Driver.GetName());
+	
+}
+
 void AChessGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,
-	FString& ErrorMessage)
+                              FString& ErrorMessage)
 {
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 	
@@ -45,5 +54,8 @@ void AChessGameMode::OnPostLogin(AController* NewPlayer)
 
 	NewPlayer->Possess(PPawn);
 
-	RestartPlayerAtPlayerStart(NewPlayer,PS);
+
+
+
+	
 }

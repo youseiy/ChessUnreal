@@ -21,9 +21,10 @@ class CHESSGAME_API AChessGameMode : public AGameModeBase
 	
 	
 protected:
+	virtual void GameWelcomePlayer(UNetConnection* Connection, FString& RedirectURL) override;
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	virtual void OnPostLogin(AController* NewPlayer) override;
-
+	
 public:
 	AChessGameMode();
 

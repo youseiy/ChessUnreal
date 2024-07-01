@@ -3,6 +3,8 @@
 
 #include "ChessGame/Public/ChessTile.h"
 
+#include "Net/UnrealNetwork.h"
+
 
 // Sets default values
 AChessTile::AChessTile()
@@ -24,6 +26,15 @@ AChessTile::AChessTile()
 	
 	bReplicates=true;
 }
+
+void AChessTile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AChessTile,BoardID)
+	DOREPLIFETIME(AChessTile,ChessPiece)
+}
+
 // Called when the game starts or when spawned
 void AChessTile::BeginPlay()
 {

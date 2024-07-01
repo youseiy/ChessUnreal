@@ -1,6 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 #include "ChessPlayerController.h"
 
+#include "ChessBoard.h"
+#include "ChessCollisionTypes.h"
+#include "ChessGameState.h"
+#include "ChessPlayerState.h"
 #include "ChessTile.h"
 #include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
@@ -14,7 +18,16 @@ AChessPlayerController::AChessPlayerController()
 	bReplicates=true;
 }
 
+void AChessPlayerController::Server_MovePiece_Implementation(AChessPiece* Piece, AChessTile* Tile)
+{
+	GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->Server_RequestChessPieceMove(Piece,Tile);
+}
 
+
+void AChessPlayerController::Server_RequestPieceOwnership_Implementation(AChessPiece* ChessPiece, APlayerController* PC)
+{
+	ChessPiece->SetOwner(PC);
+}
 
 void AChessPlayerController::BeginPlay()
 {
@@ -29,32 +42,27 @@ void AChessPlayerController::BeginPlay()
 	//todo: make this safer
 	if (GetWorld())
 	{
-		GetWorld()->GetTimerManager().SetTimer(TileTime,[this]()
+		GetWorld()->GetTimerManager().SetTimer(TileTimer,[this]()
 		{
-			if (bIsAnyTileSelected) return;
-			
+			//todo: make a func
 			
 			FHitResult HitResult;
-
-			
-			
-			if (const bool bClientHit=GetHitResultUnderCursorByChannel(TraceTypeQuery1,false,HitResult))
+			if (const bool bClientHit=GetHitResultUnderCursorByChannel(ChessTileTraceChannel,false,HitResult))
 			{
 				for (const auto& Tile : CurrentValidMoves)
 				{
 					Tile->DisableShader();
 				}
-
-				
 				HoveredTile=Cast<AChessTile>(HitResult.GetActor());
 				
-				if (auto* Interface=Cast<IChessPieceInterface>(HoveredTile->GetChessPiece()))
+				if (HoveredTile->IsOccupied())
 				{
-					CurrentValidMoves=Interface->GetValidMoves();
+					auto& ValidMoves=HoveredTile->GetChessPiece()->GetValidMoves();
 					
-					for (const auto& Tile : Interface->GetValidMoves())
+					CurrentValidMoves=ValidMoves;
+					
+					for (auto& Tile : ValidMoves)
 					{
-						
 						Tile->ShowShader();
 					}
 					
@@ -93,7 +101,14 @@ void AChessPlayerController::SetupInputComponent()
 
 void AChessPlayerController::Cancel(const FInputActionValue& Value)
 {
-	bIsAnyTileSelected=false;
+	if (IsValid(GetWorld())) return;
+
+	if (GetWorld()->GetTimerManager().IsTimerPaused(TileTimer))
+	{
+		GetWorld()->GetTimerManager().UnPauseTimer(TileTimer);
+		bIsAnyTileSelected=false;
+	}
+	
 }
 
 void AChessPlayerController::Look(const FInputActionValue& Value)
@@ -115,29 +130,40 @@ void AChessPlayerController::MoveBoard(const FInputActionValue& Value)
 }
 void AChessPlayerController::Select(const FInputActionValue& Value)
 {
-	if (!GetCurrentHoveredTile()) return;
+	if (!IsValid(GetCurrentHoveredTile()) || !IsValid(GetWorld())) return;
 
+	UE_LOGFMT(LogChessGame,Warning,"{a} Chessboard valid!",GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->GetName());
 
 	auto* CurrentTile=GetCurrentHoveredTile();
 	auto* ChessPieceOnTile=CurrentTile->GetChessPiece();
 
-	bIsAnyTileSelected=true;
-	FHitResult HitResult;
-	
-	auto* Interface=Cast<IChessPieceInterface>(ChessPieceOnTile);
-
-	auto Moves=Interface->GetValidMoves();
-	
-	if (GetHitResultUnderCursorByChannel(TraceTypeQuery1,false,HitResult))
+	if (CurrentTile->IsOccupied())
 	{
-		if (Moves.Contains(HitResult.GetActor()))
+		
+		GetWorld()->GetTimerManager().PauseTimer(TileTimer);
+		bIsAnyTileSelected=true;
+		//temp
+		auto& Moves=ChessPieceOnTile->GetValidMoves();
+
+		FHitResult HitResult;
+		//find out the context of the tile
+		if (GetHitResultUnderCursorByChannel(ChessTileTraceChannel,false,HitResult))
 		{
-			Interface->MoveTo(Cast<AChessTile>(HitResult.GetActor()));
-			bIsAnyTileSelected=false;
+			if (Moves.Contains(HitResult.GetActor()) && HitResult.GetActor()!=CurrentTile)
+			{
+				//Server_RequestPieceOwnership( ChessPieceOnTile,this);
+				
+				//ChessPieceOnTile->Server_TryMoveTo(Cast<AChessTile>(HitResult.GetActor()));
+				
+					Server_MovePiece(ChessPieceOnTile,Cast<AChessTile>(HitResult.GetActor()));
+				
+			
+				
+				GetWorld()->GetTimerManager().UnPauseTimer(TileTimer);
+				bIsAnyTileSelected=false;
+			}
 		}
 	}
-	
-	
 	
 }
 void AChessPlayerController::Client_TileHit_Implementation(const FHitResult& TileHitResult)

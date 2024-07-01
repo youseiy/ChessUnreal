@@ -24,9 +24,9 @@ class CHESSGAME_API AChessTile : public AActor
 	UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess))
 	TObjectPtr<UMaterialInstance> GreenMaterialInstance;
 	
+	UPROPERTY(Replicated)
 	FVector2D BoardID;
-	
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AChessPiece* ChessPiece;
 	
 public:
@@ -34,9 +34,10 @@ public:
 	AChessTile();
 
 protected:
-	// Called when the game starts or when spawned
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
 public:
+	bool IsOccupied()const{return IsValid(ChessPiece);}
 	AChessPiece* GetChessPiece()const {return ChessPiece;}
 	void SetChessPiece(AChessPiece* Piece){ChessPiece=Piece;}
 	void SetBoardID(const FVector2D& ID);

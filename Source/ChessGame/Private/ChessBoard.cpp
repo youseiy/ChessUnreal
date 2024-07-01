@@ -4,7 +4,9 @@
 #include "ChessGame/Public/ChessBoard.h"
 
 #include "ChessGameMode.h"
+#include "ChessGameState.h"
 #include "ChessPiecesSet.h"
+#include "ChessGame/ChessGame.h"
 #include "ChessGame/Public/ChessPiece.h"
 #include "ChessGame/Public/ChessTile.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,6 +23,7 @@ AChessBoard::AChessBoard()
 	bReplicates=true;
 }
 
+
 // Called when the game starts or when spawned
 void AChessBoard::BeginPlay()
 {
@@ -28,9 +31,9 @@ void AChessBoard::BeginPlay()
 
 	if (HasAuthority())
 	{
-		//todo:refactor
 		Cast<AChessGameMode>(UGameplayStatics::GetGameMode(this))->ChessBoard=this;;
 		BuildBoard();
+		GetWorld()->GetGameState<AChessGameState>()->Server_SetChessBoard(this);
 	}
 
 	
@@ -62,10 +65,12 @@ void AChessBoard::BuildBoard()
 	
 	if (!IsValid(BlackTile ) || !IsValid(BlackTile)) return;
 	
-	for (auto OuterIndex{0}; OuterIndex <  X; OuterIndex++)
+	for (int32 OuterIndex{0}; OuterIndex <  X; OuterIndex++)
 	{
-		for (auto InnerIndex{0}; InnerIndex < Y; InnerIndex++)
+		for (int32 InnerIndex{0}; InnerIndex < Y; InnerIndex++)
 		{
+			FVector2D BoardID{static_cast<float>(OuterIndex),static_cast<float>(InnerIndex)};
+			
 			FVector SpawnLoc = FVector{
 				static_cast<float>(InnerIndex - X / 2),
 				static_cast<float>(OuterIndex - Y / 2),
@@ -76,20 +81,14 @@ void AChessBoard::BuildBoard()
 			SpawnTrans.SetLocation(SpawnLoc);
 
 			
-			
-
 			// Alternate between black and white tiles
 			TSubclassOf<AChessTile> TileClass = ((OuterIndex + InnerIndex) % 2 == 0) ? WhiteTile : BlackTile;
 
-			auto* Tile = GetWorld()->SpawnActorDeferred<AChessTile>(TileClass, SpawnTrans);
-			Tile->SetBoardID({static_cast<float>(OuterIndex),static_cast<float>(InnerIndex)});
-			
+			auto* Tile = InitChessTile(TileClass, SpawnTrans);
+			Tile->SetBoardID(BoardID);
 			Tiles.Emplace(Tile);
+
 			
-			Tile->FinishSpawning(SpawnTrans);
-			
-			DrawDebugString(GetWorld(),Tile->GetActorLocation(),FString::Printf(TEXT("Tile ID: X: %ls %ls"),*FString::SanitizeFloat(OuterIndex,0),*FString::SanitizeFloat(InnerIndex,0)),nullptr,FColor::Blue,5.f,false,1);
-			Tile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
 			
 			if ((OuterIndex + InnerIndex) % 2 == 0)
 			{
@@ -101,36 +100,77 @@ void AChessBoard::BuildBoard()
 			}
 			
 			// Determine chess piece
-			TSubclassOf<AChessPiece> PieceClass = nullptr;
-
-			if (OuterIndex == 1)
-			{
-				PieceClass = WhitePiecesSet->Pawn;
-			}
-			else if (OuterIndex == 6)
-			{
-				PieceClass = BlackPiecesSet->Pawn;
-				
-			}
-			else if (OuterIndex == 0 || OuterIndex == 7)
-			{
-				bool bIsWhite = (OuterIndex == 0);
-				PieceClass = GetPieceClass(InnerIndex, bIsWhite);
-			}
+			TSubclassOf<AChessPiece> PieceClass =EvaluatePieceClass(OuterIndex,InnerIndex);;
 			
 
-			// Spawn chess piece if applicable
 			if (PieceClass)
 			{
-				AChessPiece* Piece = GetWorld()->SpawnActor<AChessPiece>(PieceClass, Tile->GetActorLocation(), FRotator::ZeroRotator);
-				
-				FVector2D BoardID{static_cast<float>(OuterIndex),static_cast<float>(InnerIndex)};
-				Piece->SetInitBoardID(BoardID);
-				Tile->SetChessPiece(Piece);
-				Piece->AttachToActor(Tile, FAttachmentTransformRules::SnapToTargetIncludingScale);
+				auto* SpawnedPiece=InitChessPiece(PieceClass,*Tile,SpawnLoc,BoardID);
+				Pieces.Add(SpawnedPiece);
+				Tile->SetChessPiece(SpawnedPiece);
+
+
+				UE_LOGFMT(LogChessGame,Warning,"Tile: {X}:{Y} has Chess piece {a}",OuterIndex,InnerIndex,PieceClass?PieceClass->GetName():"none");
 			}
+			
+			
 		}
 	}
-	UE_LOGFMT(LogTemp,Warning,"Chess board has {a} Tiles, {b} Black and {c} White",Tiles.Num(),WhiteTiles.Num(),BlackTiles.Num());
+
+	//Initialize valid moves for all pieces
+	for (const auto& Piece : Pieces)
+	{
+		Piece->UpdateValidMoves();
+	}
+	
+	UE_LOGFMT(LogChessGame,Warning,"Chess board has {a} Tiles, {b} Black and {c} White",Tiles.Num(),WhiteTiles.Num(),BlackTiles.Num());
 }
+
+TSubclassOf<AChessPiece> AChessBoard::EvaluatePieceClass(int32 OuterIndex, int32 InnerIndex)
+{
+	if (OuterIndex == 1) // Pawns
+	{
+		return WhitePiecesSet->Pawn;
+	}
+	if (OuterIndex == 6) // Pawns
+	{
+		return BlackPiecesSet->Pawn;
+	}
+	if (OuterIndex == 0 || OuterIndex == 7) // Major pieces
+	{
+		bool bIsWhite = (OuterIndex == 0);
+		return GetPieceClass(InnerIndex, bIsWhite);
+	}
+	return nullptr;
+}
+
+AChessPiece* AChessBoard::InitChessPiece(const TSubclassOf<AChessPiece>& PieceClass, AChessTile& OwnerTile,
+                                         const FVector& Location, const FVector2D& BoardID)
+{
+	FTransform Transform{Location};
+	AChessPiece* Piece = GetWorld()->SpawnActorDeferred<AChessPiece>(PieceClass,Transform,this,nullptr);
+	Piece->SetInitBoardID(BoardID);
+	Piece->FinishSpawning(Transform);
+	Piece->AttachToActor(&OwnerTile, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	return Piece;
+	
+}
+
+AChessTile* AChessBoard::InitChessTile(TSubclassOf<AChessTile> TileClass,const FTransform& Location)
+{
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Owner=this;
+	auto* Tile=GetWorld()->SpawnActor<AChessTile>(TileClass,Location,SpawnParameters);
+	Tile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
+	return Tile;
+}
+void AChessBoard::Server_RequestChessPieceMove_Implementation(AChessPiece* Piece, AChessTile* Tile)
+{
+	if (!IsValid(Piece) || !IsValid(Tile)) return;
+	
+	Piece->Server_TryMoveTo(Tile);
+}
+
+
+
 
