@@ -20,9 +20,10 @@ AChessPlayerController::AChessPlayerController()
 
 
 
-void AChessPlayerController::Server_MovePiece_Implementation(AChessPiece* Piece, AChessTile* Tile)
+void AChessPlayerController::Server_MovePiece_Implementation(AChessPiece* Piece, AChessTile* CurrentTile, AChessTile* TileToMove)
 {
-	GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->Server_RequestChessPieceMove(Piece,Tile);
+	CurrentTile->OnChessPieceMoved.ExecuteIfBound();
+	GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->Server_RequestChessPieceMove(Piece,TileToMove);
 }
 
 
@@ -41,38 +42,11 @@ void AChessPlayerController::BeginPlay()
 		UE_LOGFMT(LogChessGame,Warning,"PC name is {a}",GetName());
 		UKismetSystemLibrary::PrintString(this,FString::Printf(TEXT("Begin player %s Controller!"),*GetName()));
 	}
-	//todo: make this safer
-	if (GetWorld())
-	{
-		GetWorld()->GetTimerManager().SetTimer(TileTimer,[this]()
-		{
-			//todo: make a func
-			
-			FHitResult HitResult;
-			if (const bool bClientHit=GetHitResultUnderCursorByChannel(ChessTileTraceChannel,false,HitResult))
-			{
-				for (const auto& Tile : CurrentValidMoves)
-				{
-					Tile->DisableShader();
-				}
-				HoveredTile=Cast<AChessTile>(HitResult.GetActor());
-				
-				if (HoveredTile->IsOccupied())
-				{
-					auto& ValidMoves=HoveredTile->GetChessPiece()->GetValidMoves();
-					
-					CurrentValidMoves=ValidMoves;
-					
-					for (auto& Tile : ValidMoves)
-					{
-						Tile->ShowShader();
-						
-					}
-					
-				}
-			};
-		},1.f/60.f,true);
-	}
+	
+	GetWorld()->GetTimerManager().SetTimer(TileTimer,
+			FTimerDelegate::CreateUObject(this,&AChessPlayerController::SelectTile),
+			1.f/60.f,true);
+	
 }
 
 
@@ -92,7 +66,7 @@ void AChessPlayerController::SetupInputComponent()
 			Subsystem->AddMappingContext(IMC, 0);
 			EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 			EnhancedInputComponent->BindAction(ToggleLookAction, ETriggerEvent::Triggered, this, &ThisClass::ToggleLook);
-			EnhancedInputComponent->BindAction( SelectAction,ETriggerEvent::Started, this, &ThisClass::Select);
+			EnhancedInputComponent->BindAction( SelectAction,ETriggerEvent::Started, this, &ThisClass::SelectChessPiece);
 			EnhancedInputComponent->BindAction(MoveBoardAction, ETriggerEvent::Triggered, this, &ThisClass::MoveBoard);
 			EnhancedInputComponent->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::Cancel);
 		}
@@ -131,7 +105,50 @@ void AChessPlayerController::MoveBoard(const FInputActionValue& Value)
 	//specific for gamepad
 	//todo: imp
 }
-void AChessPlayerController::Select(const FInputActionValue& Value)
+
+void AChessPlayerController::SelectTile()
+{
+		
+	FHitResult HitResult;
+	if (GetHitResultUnderCursorByChannel(ChessTileTraceChannel, false, HitResult))
+	{
+		// Disable shaders for previously valid moves and clear the list
+		for (const auto& Tile : CurrentValidMoves)
+		{
+			Tile->DisableShader();
+		}
+		CurrentValidMoves.Empty();
+
+		// Update HoveredTile
+		if (AChessTile* NewHoveredTile = Cast<AChessTile>(HitResult.GetActor()))
+		{
+			HoveredTile = NewHoveredTile;
+			if (HoveredTile->IsOccupied())
+			{
+				if (auto* ChessPiece = HoveredTile->GetChessPiece())
+				{
+					CurrentValidMoves = ChessPiece->GetValidMoves();
+					
+					for (auto& Tile : CurrentValidMoves)
+					{
+
+						if (Tile->IsOccupied())
+						{
+							Tile->ShowShader();
+							continue;
+						}
+						
+						Tile->ShowShader();
+
+						
+					}
+				}
+			}
+		}
+	}
+}
+
+void AChessPlayerController::SelectChessPiece(const FInputActionValue& Value)
 {
 	if (!IsValid(GetCurrentHoveredTile()) || !IsValid(GetWorld())) return;
 
@@ -157,10 +174,10 @@ void AChessPlayerController::Select(const FInputActionValue& Value)
 				if (Cast<AChessTile>(HitResult.GetActor())->IsOccupied())
 				{
 					Server_CapturePiece(ChessPieceOnTile, Cast<AChessTile>(HitResult.GetActor())->GetChessPiece());
-					Server_MovePiece(ChessPieceOnTile,Cast<AChessTile>(HitResult.GetActor()));
+					Server_MovePiece(ChessPieceOnTile,CurrentTile, Cast<AChessTile>(HitResult.GetActor()));
 				}
 				
-				Server_MovePiece(ChessPieceOnTile,Cast<AChessTile>(HitResult.GetActor()));
+				Server_MovePiece(ChessPieceOnTile,CurrentTile, Cast<AChessTile>(HitResult.GetActor()));
 				
 			
 				

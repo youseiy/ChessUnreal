@@ -46,8 +46,9 @@ class CHESSGAME_API AChessPlayerController : public APlayerController
 	void Cancel(const  FInputActionValue& Value);
 	void Look(const  FInputActionValue& Value);
 	void ToggleLook(const  FInputActionValue& Value);
-	void Select(const FInputActionValue& Value);
+	void SelectChessPiece(const FInputActionValue& Value);
 	void MoveBoard(const FInputActionValue& Value);
+	void SelectTile();
 
 	UFUNCTION(Server,Reliable)
 	void Server_RequestTile();
@@ -63,7 +64,7 @@ public:
 	AChessPlayerController();
 	AChessTile* GetCurrentHoveredTile()const{return HoveredTile;}
 	UFUNCTION(Server,Reliable)
-	void Server_MovePiece(AChessPiece* Piece, AChessTile* Tile);
+	void Server_MovePiece(AChessPiece* Piece, AChessTile* CurrentTile, AChessTile* TileToMove);
 	UFUNCTION(Server,Reliable)
 	void Server_CapturePiece(AChessPiece* Piece, AChessPiece* CapturedPiece);
 	

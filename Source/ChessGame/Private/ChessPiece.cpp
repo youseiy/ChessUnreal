@@ -3,6 +3,7 @@
 
 #include "ChessGame/Public/ChessPiece.h"
 
+#include "ChessTile.h"
 #include "ChessGame/ChessGame.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
@@ -86,7 +87,10 @@ void AChessPiece::Server_Capture_Implementation(AChessPiece* TargetPiece)
 
 void AChessPiece::Server_TryMoveTo_Implementation(AChessTile* NewPosition)
 {
-	
+	SetCurrentBoardID(NewPosition->GetTileID());
+	AnimatedTranslation(NewPosition->GetActorLocation());
+	NewPosition->SetChessPiece(this);
+	UpdateValidMoves();
 }
 void AChessPiece::AnimatedTranslation(const FVector& Target)
 {

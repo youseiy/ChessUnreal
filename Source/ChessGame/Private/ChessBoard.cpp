@@ -57,12 +57,26 @@ TSubclassOf<AChessPiece> AChessBoard::GetPieceClass(int32 Index, bool bIsWhite) 
 	default: return nullptr;
 	}
 }
+bool AChessBoard::IsWithinBoardLimits(const FVector2D& Position) const
+{
+	return Position.X >= 0 && Position.X < X &&
+		   Position.Y >= 0 && Position.Y < Y;
+}
+AChessTile* AChessBoard::GetTileAt(const FVector2D& Position) const
+{
+	// Check if the position is within board limits
+	if (!IsWithinBoardLimits(Position))
+	{
+		return nullptr;
+	}
 
+	return *Tiles.FindByPredicate([ Position]( const AChessTile* Piece)
+	{
+		return Piece->GetTileID()==Position;
+	});
+}
 void AChessBoard::BuildBoard()
 {
-	constexpr int32 X{8};
-	constexpr int32 Y{8};
-	
 	if (!IsValid(BlackTile ) || !IsValid(BlackTile)) return;
 	
 	for (int32 OuterIndex{0}; OuterIndex <  X; OuterIndex++)
@@ -169,6 +183,13 @@ void AChessBoard::Server_RequestChessPieceMove_Implementation(AChessPiece* Piece
 	if (!IsValid(Piece) || !IsValid(Tile)) return;
 	
 	Piece->Server_TryMoveTo(Tile);
+
+	for (auto& ChessPiece : Pieces)
+	{
+		if (!IsValid(ChessPiece)) continue;
+		
+		ChessPiece->UpdateValidMoves();
+	}
 }
 
 

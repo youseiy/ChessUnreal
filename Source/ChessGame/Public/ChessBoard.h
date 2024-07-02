@@ -42,8 +42,13 @@ class CHESSGAME_API AChessBoard : public AActor
 	UPROPERTY()
 	TArray<AChessPiece*> Pieces;
 	
+	int32 X{8};
+	int32 Y{8};
+	FVector2D BoardSize{8,8};
 
+	
 	TSubclassOf<class AChessPiece> GetPieceClass(int32 Index, bool bIsWhite) const;
+	
 
 	void BuildBoard();
 	TSubclassOf<AChessPiece> EvaluatePieceClass(int32 OuterIndex, int32 InnerIndex);
@@ -55,7 +60,8 @@ protected:
 public:
 	AChessBoard();
 	const TArray<AChessTile*>& GetTiles()const {return Tiles;}
-	
+	bool IsWithinBoardLimits(const FVector2D& Position) const;
+	AChessTile* GetTileAt(const FVector2D& Position) const;
 	UFUNCTION(Server,Reliable)
 	void Server_RequestChessPieceMove(AChessPiece* Piece,AChessTile* Tile);
 };

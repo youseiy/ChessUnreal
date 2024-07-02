@@ -23,14 +23,6 @@ APawn_::APawn_()
 void APawn_::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (HasAuthority())
-	{
-		UpdateValidMoves();
-		UE_LOGFMT(LogChessGame,Warning,"Current valid moves: {a}",ValidMoves.Num());
-	}
-	
-	
 }
 
 void APawn_::UpdateValidMoves()
@@ -64,34 +56,10 @@ void APawn_::UpdateValidMoves()
 		}
 	}
 }
-void APawn_::MoveTo(AChessTile* NewPosition)
-{
-	if (!HasAuthority()) return;
-	
-	
-
-}
-void APawn_::Capture(AChessPiece* TargetPiece)
-{
-	
-}
-
-bool APawn_::IsMoveValid(const FVector& NewPosition) const
-{
-	return false;
-}
-
 void APawn_::Server_TryMoveTo_Implementation(AChessTile* NewPosition)
 {
-	Super::Server_TryMoveTo_Implementation(NewPosition);
-
-	
 	bAlreadyMoved=true;
-	SetCurrentBoardID(NewPosition->GetTileID());
-	AnimatedTranslation(NewPosition->GetActorLocation());
-	NewPosition->SetChessPiece(this);
-	UpdateValidMoves();
-	
+	Super::Server_TryMoveTo_Implementation(NewPosition);
 }
 
 

@@ -14,12 +14,10 @@ class CHESSGAME_API ARook : public AChessPiece
 public:
 	// Sets default values for this actor's properties
 	ARook();
-
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	virtual void UpdateValidMoves() final override;
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 };

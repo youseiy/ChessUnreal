@@ -6,6 +6,7 @@
 #include "Net/UnrealNetwork.h"
 
 
+
 // Sets default values
 AChessTile::AChessTile()
 {
@@ -27,6 +28,13 @@ AChessTile::AChessTile()
 	bReplicates=true;
 }
 
+void AChessTile::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	OnChessPieceMoved.BindUObject(this,&ThisClass::OnChessPieceMovedCallBack);
+}
+
 void AChessTile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -41,6 +49,8 @@ void AChessTile::BeginPlay()
 	Super::BeginPlay();
 	
 }
+
+
 
 void AChessTile::SetBoardID(const FVector2D& ID)
 {
@@ -57,6 +67,14 @@ void AChessTile::DisableShader()
 {
 	PlaneShaderMesh->SetVisibility(false);
 }
-
+void AChessTile::OnChessPieceMovedCallBack()
+{
+	SetChessPiece(nullptr);
+}
+void AChessTile::SetChessPiece(AChessPiece* Piece)
+{
+	bHasChessPiece=Piece?true:false;
+	ChessPiece=Piece;
+}
 
 

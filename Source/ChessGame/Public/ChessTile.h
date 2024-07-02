@@ -9,6 +9,7 @@
 
 class AChessPiece;
 
+
 UCLASS()
 class CHESSGAME_API AChessTile : public AActor
 {
@@ -28,18 +29,23 @@ class CHESSGAME_API AChessTile : public AActor
 	FVector2D BoardID;
 	UPROPERTY(Replicated)
 	AChessPiece* ChessPiece;
+	bool bHasChessPiece=false;
 	
+	void OnChessPieceMovedCallBack();
 public:
 	// Sets default values for this actor's properties
 	AChessTile();
 
 protected:
+	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
 public:
+	DECLARE_DELEGATE(FOnChessPieceMoved)
+	FOnChessPieceMoved OnChessPieceMoved;
 	bool IsOccupied()const{return IsValid(ChessPiece);}
 	AChessPiece* GetChessPiece()const {return ChessPiece;}
-	void SetChessPiece(AChessPiece* Piece){ChessPiece=Piece;}
+	void SetChessPiece(AChessPiece* Piece);
 	void SetBoardID(const FVector2D& ID);
 	void ShowShader();
 	FVector2D GetTileID()const {return BoardID;}

@@ -14,7 +14,7 @@ class CHESSGAME_API AKnight : public AChessPiece
 public:
 	// Sets default values for this actor's properties
 	AKnight();
-
+	virtual void UpdateValidMoves()  final override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
