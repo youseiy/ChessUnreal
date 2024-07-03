@@ -33,9 +33,7 @@ class CHESSGAME_API AChessTile : public AActor
 	
 	void OnChessPieceMovedCallBack();
 public:
-	// Sets default values for this actor's properties
 	AChessTile();
-
 protected:
 	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

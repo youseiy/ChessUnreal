@@ -19,19 +19,6 @@ AChessPlayerController::AChessPlayerController()
 }
 
 
-
-void AChessPlayerController::Server_MovePiece_Implementation(AChessPiece* Piece, AChessTile* CurrentTile, AChessTile* TileToMove)
-{
-	CurrentTile->OnChessPieceMoved.ExecuteIfBound();
-	GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->Server_RequestChessPieceMove(Piece,TileToMove);
-}
-
-
-void AChessPlayerController::Server_RequestPieceOwnership_Implementation(AChessPiece* ChessPiece, APlayerController* PC)
-{
-	ChessPiece->SetOwner(PC);
-}
-
 void AChessPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -46,7 +33,10 @@ void AChessPlayerController::BeginPlay()
 	GetWorld()->GetTimerManager().SetTimer(TileTimer,
 			FTimerDelegate::CreateUObject(this,&AChessPlayerController::SelectTile),
 			1.f/60.f,true);
+
 	
+	
+
 }
 
 
@@ -67,13 +57,32 @@ void AChessPlayerController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 			EnhancedInputComponent->BindAction(ToggleLookAction, ETriggerEvent::Triggered, this, &ThisClass::ToggleLook);
 			EnhancedInputComponent->BindAction( SelectAction,ETriggerEvent::Started, this, &ThisClass::SelectChessPiece);
-			EnhancedInputComponent->BindAction(MoveBoardAction, ETriggerEvent::Triggered, this, &ThisClass::MoveBoard);
+			EnhancedInputComponent->BindAction(MoveBoardAction, ETriggerEvent::Started, this, &ThisClass::MoveBoard);
 			EnhancedInputComponent->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::Cancel);
 		}
 		
 	}
 
 	
+}
+
+void AChessPlayerController::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (HasAuthority())
+	{
+		OnRep_PlayerState();
+	}
+}
+
+void AChessPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	check(PlayerState)
+	GetPlayerState<AChessPlayerState>()->OnTurnChanged.BindUObject(this,&ThisClass::OnTurnChangedCallback);
+	GetPlayerState<AChessPlayerState>()->OnPlayerReady.ExecuteIfBound();
 }
 
 void AChessPlayerController::Cancel(const FInputActionValue& Value)
@@ -102,13 +111,61 @@ void AChessPlayerController::ToggleLook(const FInputActionValue& Value)
 }
 void AChessPlayerController::MoveBoard(const FInputActionValue& Value)
 {
-	//specific for gamepad
-	//todo: imp
+	GetWorld()->GetTimerManager().PauseTimer(TileTimer);
+	
+	// Specific for gamepad input
+	FVector2D MovementInput = Value.Get<FVector2D>();
+    
+	// Ensure we have a valid tile and game state
+	if (IsValid(GetCurrentHoveredTile()))
+	{
+		auto* CurrentTile = GetCurrentHoveredTile();
+		auto* GS = GetWorld()->GetGameState<AChessGameState>();
+		if (IsValid(GS) && IsValid(GS->GetChessBoard()))
+		{
+			FVector2D CurrentTileID = CurrentTile ->GetTileID();
+			FVector2D NewTileID = CurrentTileID + MovementInput.RoundToVector(); // Adjust based on input
+
+			// Ensure the new tile is within board limits
+			if (GS->GetChessBoard()->IsWithinBoardLimits(NewTileID))
+			{
+				AChessTile* NewTile = GS->GetChessBoard()->GetTileAt(NewTileID);
+				if (IsValid(NewTile))
+				{
+					DrawDebugBox(GetWorld(),NewTile->GetActorLocation(),FVector{50},FColor::Red,true,10.f);
+					
+					HoveredTile->DisableShader();
+					HoveredTile =  NewTile;
+					if (HoveredTile->IsOccupied())
+					{
+						if (auto* ChessPiece = HoveredTile->GetChessPiece())
+						{
+							CurrentValidMoves = ChessPiece->GetValidMoves();
+					
+							for (auto& Tile : CurrentValidMoves)
+							{
+
+								if (Tile->IsOccupied())
+								{
+									Tile->ShowShader();
+									continue;
+								}
+						
+								Tile->ShowShader();
+
+						
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void AChessPlayerController::SelectTile()
 {
-		
+	
 	FHitResult HitResult;
 	if (GetHitResultUnderCursorByChannel(ChessTileTraceChannel, false, HitResult))
 	{
@@ -196,7 +253,36 @@ void AChessPlayerController::Client_TileHit_Implementation(const FHitResult& Til
 {
 	UKismetSystemLibrary::PrintString(this,TEXT("Hit Tile!"));
 }
+
+
+
+
+void AChessPlayerController::Server_MovePiece_Implementation(AChessPiece* Piece, AChessTile* CurrentTile, AChessTile* TileToMove)
+{
+	CurrentTile->OnChessPieceMoved.ExecuteIfBound();
+	GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->Server_RequestChessPieceMove(Piece,TileToMove);
+}
+
+
+void AChessPlayerController::Server_RequestPieceOwnership_Implementation(AChessPiece* ChessPiece, APlayerController* PC)
+{
+	ChessPiece->SetOwner(PC);
+}
+
+void AChessPlayerController::OnTurnChangedCallback(FGameplayTag NewTurn)
+{
+	if (GetPlayerState<AChessPlayerState>()->GetTeamTag()==NewTurn)
+	{
+		// Enable player input
+		EnableInput(this);
+	}
+	else
+	{
+		// Disable player input
+		DisableInput(this);
+	}
+}
+
 void AChessPlayerController::Server_RequestTile_Implementation()
 {
 }
-

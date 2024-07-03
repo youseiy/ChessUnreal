@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/PlayerController.h"
 #include "ChessPlayerController.generated.h"
 
@@ -57,9 +58,12 @@ class CHESSGAME_API AChessPlayerController : public APlayerController
 	UFUNCTION(Client,Reliable)
 	void Server_RequestPieceOwnership(AChessPiece* ChessPiece, APlayerController* PC);
 	
+	void OnTurnChangedCallback(FGameplayTag NewTurn);
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	virtual void PostInitializeComponents() override;
+	virtual void OnRep_PlayerState() override;
 public:
 	AChessPlayerController();
 	AChessTile* GetCurrentHoveredTile()const{return HoveredTile;}

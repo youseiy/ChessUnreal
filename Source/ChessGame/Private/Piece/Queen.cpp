@@ -11,8 +11,6 @@
 // Sets default values
 AQueen::AQueen()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
@@ -54,7 +52,6 @@ void AQueen::UpdateValidMoves()
         // Continue moving in the current direction until we hit an obstacle or go out of bounds
         for (;;)
         {
-            DrawDebugString(GetWorld(), GetActorLocation(), FString::Printf(TEXT("Piece Board ID %0.0f : %0.0f"), CurrentPosition.X, CurrentPosition.Y));
             CurrentPosition += Direction;
 
             // Check if the new position is within board limits
@@ -68,8 +65,7 @@ void AQueen::UpdateValidMoves()
             {
                 break;
             }
-
-            DrawDebugString(GetWorld(), Tile->GetActorLocation(), FString::Printf(TEXT("Board ID %0.0f : %0.0f"), CurrentPosition.X, CurrentPosition.Y));
+            
 
             // Check if the tile is occupied
             if (Tile->IsOccupied())

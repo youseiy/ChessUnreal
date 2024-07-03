@@ -17,17 +17,26 @@ class CHESSGAME_API AChessGameMode : public AGameModeBase
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess))
 	TSubclassOf<AChessPlayerPawn> PlayerClass;
+	UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess))
+	TSubclassOf<AChessBoard> BoardClass;
 
+	int32 PlayersReady{0};
 	
-	
+	FTimerHandle PlayersReadyTimerHandle;
+
+	void OnCheckPlayersReady();
 protected:
+	virtual void PostInitializeComponents() override;
 	virtual void GameWelcomePlayer(UNetConnection* Connection, FString& RedirectURL) override;
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	virtual void OnPostLogin(AController* NewPlayer) override;
-	
+
 public:
 	AChessGameMode();
 
 	UPROPERTY()
 	AChessBoard* ChessBoard;
+
+	DECLARE_DELEGATE(FOnPlayerReady)
+	FOnPlayerReady OnPlayerReady;
 };

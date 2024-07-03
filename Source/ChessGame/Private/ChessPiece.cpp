@@ -24,6 +24,8 @@ AChessPiece::AChessPiece()
 
 	PieceMesh->SetCollisionProfileName("ChessPiece");
 	bReplicates=true;
+
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AChessPiece::PostInitializeComponents()

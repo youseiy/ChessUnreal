@@ -21,6 +21,7 @@ AChessBoard::AChessBoard()
 
 
 	bReplicates=true;
+	bAlwaysRelevant=true;
 }
 
 
@@ -31,7 +32,7 @@ void AChessBoard::BeginPlay()
 
 	if (HasAuthority())
 	{
-		Cast<AChessGameMode>(UGameplayStatics::GetGameMode(this))->ChessBoard=this;;
+		Cast<AChessGameMode>(UGameplayStatics::GetGameMode(this))->ChessBoard=this;
 		BuildBoard();
 		GetWorld()->GetGameState<AChessGameState>()->Server_SetChessBoard(this);
 	}
