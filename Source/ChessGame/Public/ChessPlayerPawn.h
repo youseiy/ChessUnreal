@@ -27,6 +27,8 @@ public:
 	AChessPlayerPawn();
 
 protected:
+	virtual void UnPossessed() override;
+	virtual void PossessedBy(AController* NewController) override;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

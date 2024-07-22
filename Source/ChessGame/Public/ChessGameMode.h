@@ -20,6 +20,9 @@ class CHESSGAME_API AChessGameMode : public AGameModeBase
 	UPROPERTY(EditAnywhere,meta=(AllowPrivateAccess))
 	TSubclassOf<AChessBoard> BoardClass;
 
+	bool bIsWhiteSelected=false;
+	bool bIsBlackSelected=false;
+
 	int32 PlayersReady{0};
 	
 	FTimerHandle PlayersReadyTimerHandle;

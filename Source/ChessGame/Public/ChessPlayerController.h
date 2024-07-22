@@ -18,6 +18,12 @@ class CHESSGAME_API AChessPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+	UPROPERTY(ReplicatedUsing=OnRep_TeamTag)
+	FGameplayTag TeamTag;
+
+	FGameplayTag CurrentTurn;
+	
+
 	UPROPERTY(EditAnywhere,Category="Input",meta=(AllowPrivateAccess))
 	TObjectPtr<class UInputMappingContext> IMC;
 	UPROPERTY(EditAnywhere,Category="Input",meta=(AllowPrivateAccess))
@@ -37,7 +43,6 @@ class CHESSGAME_API AChessPlayerController : public APlayerController
 	class AChessTile* HoveredTile;
 	UPROPERTY()
 	class AChessTile* SelectedTile;
-
 	
 	UPROPERTY()
 	TArray<AChessTile*> CurrentValidMoves;
@@ -50,22 +55,29 @@ class CHESSGAME_API AChessPlayerController : public APlayerController
 	void SelectChessPiece(const FInputActionValue& Value);
 	void MoveBoard(const FInputActionValue& Value);
 	void SelectTile();
-
-	UFUNCTION(Server,Reliable)
-	void Server_RequestTile();
-	UFUNCTION(Client,Reliable)
-	void Client_TileHit(const FHitResult& TileHitResult);
-	UFUNCTION(Client,Reliable)
-	void Server_RequestPieceOwnership(AChessPiece* ChessPiece, APlayerController* PC);
 	
-	void OnTurnChangedCallback(FGameplayTag NewTurn);
+	UFUNCTION()
+	void OnRep_TeamTag();
+
 protected:
+	virtual void OnRep_Pawn() override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 	virtual void PostInitializeComponents() override;
 	virtual void OnRep_PlayerState() override;
 public:
 	AChessPlayerController();
+	
+	void Server_SetTeam(FGameplayTag Tag);
+	
+	FGameplayTag GetTeam()const {return TeamTag;}
+	
+	UFUNCTION(Client,Reliable)
+	void Client_StartTurn();
+	UFUNCTION(Client,Reliable)
+	void Client_EndTurn();
 	AChessTile* GetCurrentHoveredTile()const{return HoveredTile;}
 	UFUNCTION(Server,Reliable)
 	void Server_MovePiece(AChessPiece* Piece, AChessTile* CurrentTile, AChessTile* TileToMove);

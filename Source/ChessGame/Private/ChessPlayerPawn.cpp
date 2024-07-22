@@ -4,7 +4,9 @@
 #include "ChessPlayerPawn.h"
 
 #include "Camera/CameraComponent.h"
+#include "ChessGame/ChessGame.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Logging/StructuredLog.h"
 
 
 // Sets default values
@@ -22,6 +24,20 @@ AChessPlayerPawn::AChessPlayerPawn()
 	CameraComponent->SetupAttachment(SpringArmComponent);
 	
 	bReplicates=true;
+}
+
+void AChessPlayerPawn::UnPossessed()
+{
+	Super::UnPossessed();
+
+	UE_LOGFMT(LogChessGame,Warning, "Pawn {A} UNPOSSESSED",GetName());
+}
+
+void AChessPlayerPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	UE_LOGFMT(LogChessGame,Warning, "Pawn {A} possessed by {B}",GetName(),NewController->GetName());
 }
 
 // Called when the game starts or when spawned

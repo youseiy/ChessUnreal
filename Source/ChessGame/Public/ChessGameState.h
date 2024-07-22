@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "ChessGameState.generated.h"
 
+class AChessPlayerController;
 class AChessBoard;
 /**
  * 
@@ -16,10 +17,18 @@ class CHESSGAME_API AChessGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 private:
+	
 	UPROPERTY(Replicated)
 	TObjectPtr<AChessBoard> ChessBoard;
 	UPROPERTY(ReplicatedUsing=OnRep_CurrentTurn)
 	FGameplayTag CurrentTurn;
+
+	//These are only set on the server
+	TPair<FGameplayTag,APlayerController*> White;
+	TPair<FGameplayTag,APlayerController*> Black;
+
+
+	
 
 	UFUNCTION()
 	void OnRep_CurrentTurn();
@@ -34,16 +43,20 @@ public:
 
 
 	void Server_InitGame(TSubclassOf<AChessBoard> ChessBoardClass);
-	
-	UFUNCTION(Server,Reliable)
+	FGameplayTag GetTurn() const{return CurrentTurn;}
+
 	void Server_SetCurrentTurn(FGameplayTag NewTurn);
 	
 	UFUNCTION(Server,Reliable)
 	void Server_SetChessBoard(AChessBoard* Board);
 	
+	void Server_EndTurn(FGameplayTag Tag);
+	
 	AChessBoard* GetChessBoard()const{ return ChessBoard;}
 	
 	DECLARE_DELEGATE_OneParam(FOnTurnChanged,FGameplayTag TurnTag)
 	FOnTurnChanged OnTurnChanged;
+
+	
 	
 };

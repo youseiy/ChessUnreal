@@ -12,37 +12,30 @@
 #include "ChessGame/ChessGame.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Logging/StructuredLog.h"
+#include "Net/UnrealNetwork.h"
 
 AChessPlayerController::AChessPlayerController()
 {
 	bReplicates=true;
+	
+	bShowMouseCursor=true;
 }
 
-
+void AChessPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AChessPlayerController,TeamTag)
+}
 void AChessPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	bShowMouseCursor=true;
-	
-	if (IsLocalController())
-	{
-		UE_LOGFMT(LogChessGame,Warning,"PC name is {a}",GetName());
-		UKismetSystemLibrary::PrintString(this,FString::Printf(TEXT("Begin player %s Controller!"),*GetName()));
-	}
-	
-	GetWorld()->GetTimerManager().SetTimer(TileTimer,
-			FTimerDelegate::CreateUObject(this,&AChessPlayerController::SelectTile),
-			1.f/60.f,true);
 
 	
 	
+		
+
 
 }
-
-
-
-
-
 void AChessPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -76,19 +69,33 @@ void AChessPlayerController::PostInitializeComponents()
 	}
 }
 
+void AChessPlayerController::Server_SetTeam(FGameplayTag Tag)
+{
+	TeamTag=Tag;
+	OnRep_TeamTag();
+}
+
+
+
 void AChessPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	
 
-	check(PlayerState)
-	GetPlayerState<AChessPlayerState>()->OnTurnChanged.BindUObject(this,&ThisClass::OnTurnChangedCallback);
+	if (HasAuthority())
+	{
+		GetPlayerState<AChessPlayerState>()->OnPlayerReady.ExecuteIfBound();
+	}
 	GetPlayerState<AChessPlayerState>()->OnPlayerReady.ExecuteIfBound();
+	
+	
 }
 
 void AChessPlayerController::Cancel(const FInputActionValue& Value)
 {
 	if (IsValid(GetWorld())) return;
 
+	
 	if (GetWorld()->GetTimerManager().IsTimerPaused(TileTimer))
 	{
 		GetWorld()->GetTimerManager().UnPauseTimer(TileTimer);
@@ -123,6 +130,8 @@ void AChessPlayerController::MoveBoard(const FInputActionValue& Value)
 		auto* GS = GetWorld()->GetGameState<AChessGameState>();
 		if (IsValid(GS) && IsValid(GS->GetChessBoard()))
 		{
+			DrawDebugBox(GetWorld(),CurrentTile->GetActorLocation(),FVector{200},FColor::Red,true,10.f);
+					
 			FVector2D CurrentTileID = CurrentTile ->GetTileID();
 			FVector2D NewTileID = CurrentTileID + MovementInput.RoundToVector(); // Adjust based on input
 
@@ -132,7 +141,7 @@ void AChessPlayerController::MoveBoard(const FInputActionValue& Value)
 				AChessTile* NewTile = GS->GetChessBoard()->GetTileAt(NewTileID);
 				if (IsValid(NewTile))
 				{
-					DrawDebugBox(GetWorld(),NewTile->GetActorLocation(),FVector{50},FColor::Red,true,10.f);
+					DrawDebugBox(GetWorld(),NewTile->GetActorLocation(),FVector{200},FColor::Red,true,10.f);
 					
 					HoveredTile->DisableShader();
 					HoveredTile =  NewTile;
@@ -165,9 +174,11 @@ void AChessPlayerController::MoveBoard(const FInputActionValue& Value)
 
 void AChessPlayerController::SelectTile()
 {
+	//if (!CurrentTurn.MatchesTagExact(TeamTag)) return;
+	
 	
 	FHitResult HitResult;
-	if (GetHitResultUnderCursorByChannel(ChessTileTraceChannel, false, HitResult))
+	if (GetHitResultUnderCursorByChannel(TraceTypeQuery2, false, HitResult))
 	{
 		// Disable shaders for previously valid moves and clear the list
 		for (const auto& Tile : CurrentValidMoves)
@@ -209,7 +220,6 @@ void AChessPlayerController::SelectChessPiece(const FInputActionValue& Value)
 {
 	if (!IsValid(GetCurrentHoveredTile()) || !IsValid(GetWorld())) return;
 
-	UE_LOGFMT(LogChessGame,Warning,"{a} Chessboard valid!",GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->GetName());
 
 	auto* CurrentTile=GetCurrentHoveredTile();
 	auto* ChessPieceOnTile=CurrentTile->GetChessPiece();
@@ -228,13 +238,18 @@ void AChessPlayerController::SelectChessPiece(const FInputActionValue& Value)
 		{
 			if (Moves.Contains(HitResult.GetActor()) && HitResult.GetActor()!=CurrentTile)
 			{
-				if (Cast<AChessTile>(HitResult.GetActor())->IsOccupied())
+				if (!Cast<AChessTile>(HitResult.GetActor())->IsOccupied())
+				{
+					Server_MovePiece(ChessPieceOnTile,CurrentTile, Cast<AChessTile>(HitResult.GetActor()));
+				}
+				else
 				{
 					Server_CapturePiece(ChessPieceOnTile, Cast<AChessTile>(HitResult.GetActor())->GetChessPiece());
 					Server_MovePiece(ChessPieceOnTile,CurrentTile, Cast<AChessTile>(HitResult.GetActor()));
+					
 				}
 				
-				Server_MovePiece(ChessPieceOnTile,CurrentTile, Cast<AChessTile>(HitResult.GetActor()));
+			
 				
 			
 				
@@ -248,41 +263,61 @@ void AChessPlayerController::SelectChessPiece(const FInputActionValue& Value)
 void AChessPlayerController::Server_CapturePiece_Implementation(AChessPiece* Piece, AChessPiece* CapturedPiece)
 {
 	CapturedPiece->OnPieceCaptured.ExecuteIfBound();
+	
 }
-void AChessPlayerController::Client_TileHit_Implementation(const FHitResult& TileHitResult)
-{
-	UKismetSystemLibrary::PrintString(this,TEXT("Hit Tile!"));
-}
-
-
-
 
 void AChessPlayerController::Server_MovePiece_Implementation(AChessPiece* Piece, AChessTile* CurrentTile, AChessTile* TileToMove)
 {
 	CurrentTile->OnChessPieceMoved.ExecuteIfBound();
-	GetWorld()->GetGameState<AChessGameState>()->GetChessBoard()->Server_RequestChessPieceMove(Piece,TileToMove);
+	auto* GS{GetWorld()->GetGameState<AChessGameState>()};
+	ensure(GS);
+	GS->GetChessBoard()->Server_RequestChessPieceMove(Piece,TileToMove);
+	GS->Server_EndTurn(TeamTag);
 }
-
-
-void AChessPlayerController::Server_RequestPieceOwnership_Implementation(AChessPiece* ChessPiece, APlayerController* PC)
+void AChessPlayerController::Client_EndTurn_Implementation()
 {
-	ChessPiece->SetOwner(PC);
-}
-
-void AChessPlayerController::OnTurnChangedCallback(FGameplayTag NewTurn)
-{
-	if (GetPlayerState<AChessPlayerState>()->GetTeamTag()==NewTurn)
+	check(GetWorld())
+	
+	//todo: turn into function
+	for (const auto& Tile : CurrentValidMoves)
 	{
-		// Enable player input
-		EnableInput(this);
+		Tile->DisableShader();
 	}
-	else
-	{
-		// Disable player input
-		DisableInput(this);
-	}
+	
+	GetWorld()->GetTimerManager().ClearTimer(TileTimer);
+	CurrentTurn=FGameplayTag::EmptyTag;
 }
 
-void AChessPlayerController::Server_RequestTile_Implementation()
+void AChessPlayerController::Client_StartTurn_Implementation()
 {
+	check(GetWorld());
+	
+	GetWorld()->GetTimerManager().SetTimer(TileTimer,
+	FTimerDelegate::CreateUObject(this,&AChessPlayerController::SelectTile),
+	1.f/60.f,true);
+
+	CurrentTurn=TeamTag;
+	UE_LOGFMT(LogChessGame,Warning,"ITS MY TURN {A}",TeamTag.GetTagName());
+
 }
+void AChessPlayerController::OnRep_TeamTag()
+{
+	UE_LOGFMT(LogChessGame,Warning,"MY TEAM IS {A}!",TeamTag.GetTagName());
+}
+
+void AChessPlayerController::OnRep_Pawn()
+{
+	Super::OnRep_Pawn();
+	
+}
+
+void AChessPlayerController::OnPossess(APawn* InPawn)
+ {
+ 	Super::OnPossess(InPawn);
+ 
+ 	if (HasAuthority())
+ 	{
+ 		OnRep_Pawn();
+ 	}
+ }
+

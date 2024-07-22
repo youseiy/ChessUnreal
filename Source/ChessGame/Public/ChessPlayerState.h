@@ -14,33 +14,42 @@ UCLASS()
 class CHESSGAME_API AChessPlayerState : public APlayerState
 {
 	GENERATED_BODY()
-	UPROPERTY(ReplicatedUsing=OnRep_TeamTag)
-	FGameplayTag TeamTag;
+
 
 	UPROPERTY(ReplicatedUsing=OnRep_TurnTag)
 	FGameplayTag TurnTag;
+
+
 	
-	
-	UFUNCTION()
-	void OnRep_TeamTag();
+
 	UFUNCTION()
 	void OnRep_TurnTag();
-
+	
+	void OnTurnChangedCallback(FGameplayTag Turn);
 	void OnPlayerReadyCallback();
+	void OnMoveFinishedCallback();
 protected:
 	virtual void PostInitializeComponents() override;
+	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
 public:
-	UFUNCTION(Server,Reliable)
-	void Server_SetTeamTag(FGameplayTag Tag);
-	UFUNCTION(Server,Reliable)
-	void Server_PlayerReady();
-	
-	FGameplayTag GetTeamTag()const {return TeamTag;}
-	
+	//This is called to block and give input
 	DECLARE_DELEGATE_OneParam(FOnTurnChanged,FGameplayTag TurnTag)
 	FOnTurnChanged OnTurnChanged;
+	//This is called when a chess piece is moved or capture other piece
+	DECLARE_DELEGATE(FOnMoveFinished)
+	FOnMoveFinished OnMoveFinished;
+	
+	
+
+	UFUNCTION(Server,Reliable)
+	void Server_PlayerReady();
+	UFUNCTION(Server,Reliable)
+	void Server_MoveFinished(FGameplayTag Tag);
+	
+
+
+	
 	
 	DECLARE_DELEGATE(FOnPlayerReady)
 	FOnPlayerReady OnPlayerReady;
