@@ -17,6 +17,12 @@ void AKing::BeginPlay()
 	Super::BeginPlay();
 	
 }
+
+bool AKing::InCheck() const 
+{
+	return false;
+}
+
 void AKing::UpdateValidMoves()
 {
 	Super::UpdateValidMoves();

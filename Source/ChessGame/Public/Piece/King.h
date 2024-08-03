@@ -20,5 +20,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	bool InCheck() const ;
 	virtual void UpdateValidMoves() final override;
 };

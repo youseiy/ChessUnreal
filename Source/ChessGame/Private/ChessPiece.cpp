@@ -3,6 +3,7 @@
 
 #include "ChessGame/Public/ChessPiece.h"
 
+#include "ChessGameplayTags.h"
 #include "ChessTile.h"
 #include "ChessGame/ChessGame.h"
 #include "Logging/StructuredLog.h"
@@ -48,13 +49,18 @@ void AChessPiece::OnConstruction(const FTransform& Transform)
 
 void AChessPiece::SetInitBoardID(const FVector2D& BoardID)
 {
-	InitBoardID=BoardID;
+	DefaultBoardID=BoardID;
 	SetCurrentBoardID(BoardID);
 }
 
 void AChessPiece::SetCurrentBoardID(const FVector2D& BoardID)
 {
 	CurrentBoardID=BoardID;
+}
+
+FGameplayTag AChessPiece::GetTeam() const
+{
+	return DefaultBoardID.X==0 || DefaultBoardID.X==1? TAG_Team_White:TAG_Team_Black;
 }
 
 // Called when the game starts or when spawned
@@ -75,7 +81,7 @@ void AChessPiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AChessPiece,ValidMoves)
-	DOREPLIFETIME(AChessPiece,InitBoardID)
+	DOREPLIFETIME(AChessPiece,DefaultBoardID)
 	DOREPLIFETIME(AChessPiece,CurrentBoardID)
 }
 void AChessPiece::Server_Capture_Implementation(AChessPiece* TargetPiece)

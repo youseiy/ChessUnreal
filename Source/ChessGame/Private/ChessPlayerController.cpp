@@ -3,6 +3,7 @@
 
 #include "ChessBoard.h"
 #include "ChessCollisionTypes.h"
+#include "ChessFunctionLibrary.h"
 #include "ChessGameState.h"
 #include "ChessPlayerState.h"
 #include "ChessTile.h"
@@ -19,6 +20,8 @@ AChessPlayerController::AChessPlayerController()
 	bReplicates=true;
 	
 	bShowMouseCursor=true;
+
+	
 }
 
 void AChessPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -29,33 +32,26 @@ void AChessPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 void AChessPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
 	
-	
-		
-
-
 }
+
 void AChessPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
 	check(InputComponent);
-
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(IMC, 0);
-			EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
-			EnhancedInputComponent->BindAction(ToggleLookAction, ETriggerEvent::Triggered, this, &ThisClass::ToggleLook);
-			EnhancedInputComponent->BindAction( SelectAction,ETriggerEvent::Started, this, &ThisClass::SelectChessPiece);
-			EnhancedInputComponent->BindAction(MoveBoardAction, ETriggerEvent::Started, this, &ThisClass::MoveBoard);
-			EnhancedInputComponent->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::Cancel);
-		}
-		
-	}
-
+	
+	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
+	ensure(EnhancedInputComponent);
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	ensure(Subsystem);
+	
+	Subsystem->AddMappingContext(IMC, 0);
+	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+	EnhancedInputComponent->BindAction(ToggleLookAction, ETriggerEvent::Triggered, this, &ThisClass::ToggleLook);
+	EnhancedInputComponent->BindAction( SelectAction,ETriggerEvent::Started, this, &ThisClass::SelectChessPiece);
+	EnhancedInputComponent->BindAction(MoveBoardAction, ETriggerEvent::Started, this, &ThisClass::MoveBoard);
+	EnhancedInputComponent->BindAction(CancelAction, ETriggerEvent::Started, this, &ThisClass::Cancel);
 	
 }
 
@@ -87,8 +83,6 @@ void AChessPlayerController::OnRep_PlayerState()
 		GetPlayerState<AChessPlayerState>()->OnPlayerReady.ExecuteIfBound();
 	}
 	GetPlayerState<AChessPlayerState>()->OnPlayerReady.ExecuteIfBound();
-	
-	
 }
 
 void AChessPlayerController::Cancel(const FInputActionValue& Value)
@@ -193,7 +187,8 @@ void AChessPlayerController::SelectTile()
 			HoveredTile = NewHoveredTile;
 			if (HoveredTile->IsOccupied())
 			{
-				if (auto* ChessPiece = HoveredTile->GetChessPiece())
+				auto* ChessPiece = HoveredTile->GetChessPiece();
+				if (ChessPiece->GetTeam()==TeamTag)
 				{
 					CurrentValidMoves = ChessPiece->GetValidMoves();
 					

@@ -9,16 +9,16 @@
 #include "ChessPlayerPawn.h"
 #include "ChessPlayerState.h"
 #include "ChessGame/ChessGame.h"
-#include "GameFramework/PlayerStart.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Logging/StructuredLog.h"
+#include "UI/ChessHUD.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogChessGameMode,All,All);
+DEFINE_LOG_CATEGORY_STATIC(LogChessGameMode, All, All);
 
 AChessGameMode::AChessGameMode()
 {
 	PlayerStateClass=AChessPlayerState::StaticClass();
 	PlayerControllerClass=AChessPlayerController::StaticClass();
+	HUDClass=AChessHUD::StaticClass();
 }
 
 void AChessGameMode::OnCheckPlayersReady()

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ChessPieceInterface.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
 #include "ChessPiece.generated.h"
 
@@ -20,7 +21,7 @@ protected:
 	bool bIsWhite=false;
 	
 	UPROPERTY(Replicated)
-	FVector2D InitBoardID;
+	FVector2D DefaultBoardID;
 	UPROPERTY(Replicated)
 	FVector2D CurrentBoardID;
 	UPROPERTY(Replicated)
@@ -48,6 +49,8 @@ public:
 	void SetInitBoardID(const FVector2D& BoardID);
 	void SetCurrentBoardID(const FVector2D& BoardID);
 	bool GetIsWhite()const {return bIsWhite;}
+	FGameplayTag GetTeam()const;
+	FVector2D GetDefaultBoardID() const {return DefaultBoardID;}
 
 	
 	
