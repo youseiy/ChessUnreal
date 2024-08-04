@@ -39,6 +39,9 @@ void APawn_::UpdateValidMoves()
 
 	FVector2D OneStep = { CurrentBoardID.X + (GetIsWhite() ? 1 : -1), CurrentBoardID.Y };
 	FVector2D TwoStep = { CurrentBoardID.X + 2 * (GetIsWhite() ? 1 : -1), CurrentBoardID.Y };
+    
+	FVector2D DiagonalLeft = { CurrentBoardID.X + (GetIsWhite() ? 1 : -1), CurrentBoardID.Y - 1 };
+	FVector2D DiagonalRight = { CurrentBoardID.X + (GetIsWhite() ? 1 : -1), CurrentBoardID.Y + 1 };
 
 	// Iterate over tiles to find valid moves
 	for (const auto& Tile : Tiles)
@@ -47,11 +50,23 @@ void APawn_::UpdateValidMoves()
 
 		if (TileID == OneStep || (TileID == TwoStep && !bAlreadyMoved))
 		{
-			ValidMoves.Add(Tile);
+			// Check if the tile is empty
+			if (!Tile->IsOccupied())
+			{
+				ValidMoves.Add(Tile);
+			}
 
 			if (bAlreadyMoved && ValidMoves.Num() >= 1)
 			{
 				break;
+			}
+		}
+		else if (TileID == DiagonalLeft || TileID == DiagonalRight)
+		{
+			// Check if the tile has an enemy piece
+			if (Tile->IsOccupied() && Tile->GetChessPiece()->GetIsWhite() != GetIsWhite())
+			{
+				ValidMoves.Add(Tile);
 			}
 		}
 	}
