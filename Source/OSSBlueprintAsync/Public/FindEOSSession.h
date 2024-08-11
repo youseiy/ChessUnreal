@@ -36,7 +36,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnComplete OnComplete;
 
-	UFUNCTION(BlueprintCallable,Category=EOSLimiar,meta=(BlueprintInternalUseOnly = "true",HidePin = "WorldContextObject",DefaultToSelf="WorldContextObject"))
+	UFUNCTION(BlueprintCallable,Category=EOSBlueprintAsync,meta=(BlueprintInternalUseOnly = "true",HidePin = "WorldContextObject",DefaultToSelf="WorldContextObject"))
 	static UFindEOSSession* FindEOSSession(UObject* WorldContextObject, APlayerController* Controller);
 
 	

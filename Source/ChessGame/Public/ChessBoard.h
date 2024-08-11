@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "ChessBoard.generated.h"
 
+class AKing;
 class AChessTile;
 class UChessPiecesSet;
 
@@ -19,17 +20,17 @@ class CHESSGAME_API AChessBoard : public AActor
 {
 	GENERATED_BODY()
 	
+	//Chess Set---------------------------
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UChessPiecesSet> BlackPiecesSet;
-
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UChessPiecesSet> WhitePiecesSet;
-	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AChessTile> BlackTile;
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AChessTile> WhiteTile;
 	
+	//Default Variables---------------------
 	UPROPERTY()
 	TArray<AChessTile*> Tiles;
 
@@ -38,6 +39,13 @@ class CHESSGAME_API AChessBoard : public AActor
 
 	UPROPERTY()
 	TArray<AChessTile*> BlackTiles;
+
+	UPROPERTY()
+	AKing* BlackKing;
+
+	UPROPERTY()
+	AKing* WhiteKing;
+	 
 	
 	UPROPERTY()
 	TArray<AChessPiece*> Pieces;
@@ -45,7 +53,6 @@ class CHESSGAME_API AChessBoard : public AActor
 	int32 X{8};
 	int32 Y{8};
 	FVector2D BoardSize{8,8};
-
 	
 	TSubclassOf<class AChessPiece> GetPieceClass(int32 Index, bool bIsWhite) const;
 	
@@ -64,4 +71,9 @@ public:
 	AChessTile* GetTileAt(const FVector2D& Position) const;
 	UFUNCTION(Server,Reliable)
 	void Server_RequestChessPieceMove(AChessPiece* Piece,AChessTile* Tile);
+
+	TArray<AChessPiece*> GetBlackPieces()const;
+	TArray<AChessPiece*> GetWhitePieces()const;
+	AKing* GetBlackKing()const{return BlackKing;}
+	AKing* GetWhiteKing()const{return WhiteKing;} 
 };

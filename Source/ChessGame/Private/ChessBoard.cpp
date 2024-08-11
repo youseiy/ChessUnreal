@@ -6,6 +6,7 @@
 #include "ChessGameMode.h"
 #include "ChessGameState.h"
 #include "ChessPiecesSet.h"
+#include "Piece/King.h"
 #include "ChessGame/ChessGame.h"
 #include "ChessGame/Public/ChessPiece.h"
 #include "ChessGame/Public/ChessTile.h"
@@ -13,19 +14,15 @@
 #include "Logging/StructuredLog.h"
 
 
-// Sets default values
+
 AChessBoard::AChessBoard()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 
 	bReplicates=true;
 	bAlwaysRelevant=true;
 }
-
-
-// Called when the game starts or when spawned
 void AChessBoard::BeginPlay()
 {
 	Super::BeginPlay();
@@ -76,9 +73,40 @@ AChessTile* AChessBoard::GetTileAt(const FVector2D& Position) const
 		return Piece->GetTileID()==Position;
 	});
 }
+
+TArray<AChessPiece*> AChessBoard::GetBlackPieces() const
+{
+	TArray<AChessPiece*> BlackPieces;
+
+	for (const auto& Piece : Pieces)
+	{
+		if (!Piece->GetIsWhite())
+		{
+			BlackPieces.Emplace(Piece);
+		}
+	}
+	
+	return BlackPieces;
+}
+
+TArray<AChessPiece*> AChessBoard::GetWhitePieces() const
+{
+	TArray<AChessPiece*> WhitePieces;
+
+	for (const auto& Piece : Pieces)
+	{
+		if (Piece->GetIsWhite())
+		{
+			 WhitePieces.Emplace(Piece);
+		}
+	}
+	
+	return WhitePieces;
+}
+
 void AChessBoard::BuildBoard()
 {
-	if (!IsValid(BlackTile ) || !IsValid(BlackTile)) return;
+	if (!ensure(BlackTile ) || !ensure(BlackTile)) return;
 	
 	for (int32 OuterIndex{0}; OuterIndex <  X; OuterIndex++)
 	{
@@ -116,17 +144,21 @@ void AChessBoard::BuildBoard()
 			
 			// Determine chess piece
 			TSubclassOf<AChessPiece> PieceClass =EvaluatePieceClass(OuterIndex,InnerIndex);;
+			ensure(PieceClass);
 			
+			auto* SpawnedPiece=InitChessPiece(PieceClass,*Tile,SpawnLoc,BoardID);
 
-			if (PieceClass)
-			{
-				auto* SpawnedPiece=InitChessPiece(PieceClass,*Tile,SpawnLoc,BoardID);
-				Pieces.Add(SpawnedPiece);
-				Tile->SetChessPiece(SpawnedPiece);
+			BlackKing=SpawnedPiece->IsA<AKing>()?Cast<AKing>(SpawnedPiece):nullptr;
+			WhiteKing=SpawnedPiece->IsA<AKing>()?Cast<AKing>(SpawnedPiece):nullptr;
+			
+			ensure(SpawnedPiece);
+			
+			Pieces.Add(SpawnedPiece);
+			Tile->SetChessPiece(SpawnedPiece);
 
 
-				UE_LOGFMT(LogChessGame,Warning,"Tile: {X}:{Y} has Chess piece {a}",OuterIndex,InnerIndex,PieceClass?PieceClass->GetName():"none");
-			}
+			UE_LOGFMT(LogChessGame,Warning,"Tile: {X}:{Y} has Chess piece {a}",OuterIndex,InnerIndex,PieceClass?PieceClass->GetName():"none");
+		
 			
 			
 		}

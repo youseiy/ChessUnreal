@@ -35,11 +35,11 @@ void UCreateEOSSession::Activate()
 		SessionSettings.bAllowJoinViaPresence=true;
 		SessionSettings.bUsesPresence=true;
 		SessionSettings.bUseLobbiesIfAvailable=true;
-		SessionSettings.Set(SEARCH_KEYWORDS,FString("CubeRage"),EOnlineDataAdvertisementType::ViaOnlineService);
+		SessionSettings.Set(SEARCH_KEYWORDS,FString("HeavenChess"),EOnlineDataAdvertisementType::ViaOnlineService);
 
 	    EOSSubsystem->GetSessionPtr()->OnCreateSessionCompleteDelegates.AddUObject(this,&UCreateEOSSession::OnCreateSession);
 
-	if (!EOSSubsystem->GetSessionPtr()->CreateSession(0,FName("CubeRage"),SessionSettings))
+	if (!EOSSubsystem->GetSessionPtr()->CreateSession(0,FName("HeavenChess"),SessionSettings))
 		OnFail.Broadcast();
 	
 	

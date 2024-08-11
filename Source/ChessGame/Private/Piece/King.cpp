@@ -5,6 +5,8 @@
 
 #include "ChessBoard.h"
 #include "ChessGameMode.h"
+#include "ChessGameState.h"
+#include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -18,9 +20,36 @@ void AKing::BeginPlay()
 	
 }
 
-bool AKing::InCheck() const 
+bool AKing::Server_InCheck() const 
 {
-	return false;
+	auto* ChessGS = GetWorld()->GetGameState<AChessGameState>();
+	ensure(ChessGS);
+
+	// Get all opponent pieces
+	TArray<AChessPiece*> OpponentPieces =ChessGS->Server_GetAllOpponentPieces(GetIsWhite());
+
+	// Iterate over each opponent piece to check if any can move to the King's current position
+	for (AChessPiece* OpponentPiece : OpponentPieces)
+	{
+		if (!IsValid(OpponentPiece))
+		{
+			continue;
+		}
+
+		// Update valid moves of the opponent piece
+		OpponentPiece->UpdateValidMoves();
+
+		// Check if the King's current position is in the opponent piece's valid moves
+		for (AChessTile* ValidMove : OpponentPiece->GetValidMoves())
+		{
+			if (ValidMove->GetTileID() == CurrentBoardID)
+			{
+				return true; // King is in check
+			}
+		}
+	}
+
+	return false; // King is not in check*/
 }
 
 void AKing::UpdateValidMoves()
@@ -28,15 +57,13 @@ void AKing::UpdateValidMoves()
 	Super::UpdateValidMoves();
 	// This is only on the server
 	auto* ChessGameMode = Cast<AChessGameMode>(UGameplayStatics::GetGameMode(this));
-	if (!IsValid(ChessGameMode) || !IsValid(ChessGameMode->ChessBoard))
-	{
-		return;
-	}
+
+	ensure(ChessGameMode && ChessGameMode->ChessBoard);
 
 	ValidMoves.Empty();
 
 	// Directions the king can move: all adjacent squares
-	TArray<FVector2D> Directions = {
+	TArray<FVector2D> Directions{
 		{1, 0},    // Right
 		{-1, 0},   // Left
 		{0, 1},    // Up

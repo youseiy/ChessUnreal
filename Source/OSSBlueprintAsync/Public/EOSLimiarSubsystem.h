@@ -15,26 +15,6 @@ class OSSBLUEPRINTASYNC_API UEOSLimiarSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
-	
-	//Delegate to bind callback event for login. 
-	FDelegateHandle LoginDelegateHandle;
-
-
-
-	IOnlineSubsystem* SubsystemPtr;
-	IOnlineIdentityPtr IdentityPtr;
-	IOnlineSessionPtr SessionPtr;
-
-	
-	UFUNCTION(BlueprintCallable)
-	void LoginEOS();
-	UFUNCTION(BlueprintCallable)
-	void CreateEOSSession();
-	UFUNCTION(BlueprintCallable)
-	void ShowInviteUI();
-
-	
-
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
@@ -44,6 +24,15 @@ public:
 	IOnlineSessionPtr GetSessionPtr() const { return SessionPtr;}
 	IOnlineIdentityPtr GetIdentityPtr() const {return IdentityPtr;} 
 	IOnlineSubsystem* GetOnlineSubsystemPtr() const{ return SubsystemPtr;}
+
+private:
+	//Delegate to bind callback event for login. 
+	FDelegateHandle LoginDelegateHandle;
 	
+	IOnlineSubsystem* SubsystemPtr;
+	IOnlineIdentityPtr IdentityPtr;
+	IOnlineSessionPtr SessionPtr;
 	
+	UFUNCTION(BlueprintCallable)
+	void LoginEOS();
 };

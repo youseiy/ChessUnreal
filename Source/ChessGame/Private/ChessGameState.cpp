@@ -21,22 +21,20 @@ void AChessGameState::Server_InitGame( TSubclassOf<AChessBoard> ChessBoardClass)
 {
 	if (HasAuthority())
 	{
-		
-		
 		auto* WhitePC=Cast<AChessPlayerController>( PlayerArray[0]->GetPlayerController());
 
-		 WhitePC->Server_SetTeam(TAG_Team_White);
+		 WhitePC->Server_SetTeam(ChessGameplayTags::TAG_Team_White);
 		
-		White.Key=TAG_Team_White;
+		White.Key=ChessGameplayTags::TAG_Team_White;
 		White.Value=WhitePC;
 		
 
 		auto* BlackPC=Cast<AChessPlayerController>( PlayerArray[1]->GetPlayerController());
 
-		Black.Key=TAG_Team_Black;
+		Black.Key=ChessGameplayTags::TAG_Team_Black;
 		Black.Value=BlackPC;
 		
-		BlackPC->Server_SetTeam(TAG_Team_Black);
+		BlackPC->Server_SetTeam(ChessGameplayTags::TAG_Team_Black);
 		
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.Owner=this;
@@ -57,7 +55,7 @@ void AChessGameState::Server_EndTurn(FGameplayTag Tag)
 {
 	ensure(CurrentTurn.MatchesTagExact(Tag));
 
-	Server_SetCurrentTurn(CurrentTurn==TAG_Team_Black?TAG_Team_White:TAG_Team_Black);
+	Server_SetCurrentTurn(CurrentTurn==ChessGameplayTags::TAG_Team_Black?ChessGameplayTags::TAG_Team_White:ChessGameplayTags::TAG_Team_Black);
 	
 }
 void AChessGameState::BeginPlay()
@@ -84,6 +82,14 @@ void AChessGameState::Server_SetCurrentTurn(FGameplayTag NewTurn)
 	UE_LOGFMT(LogChessGame,Warning,"NEW TURN: {a}",NewTurn.GetTagName());
 	
 }
+
+TArray<AChessPiece*> AChessGameState::Server_GetAllOpponentPieces(bool isWhite) const 
+{
+	ensure(ChessBoard);
+	return isWhite?ChessBoard->GetWhitePieces():ChessBoard->GetBlackPieces();
+}
+
+
 void AChessGameState::Server_SetChessBoard_Implementation(AChessBoard* Board)
 {
 	ChessBoard=Board;

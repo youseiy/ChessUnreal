@@ -3,12 +3,11 @@
 
 #include "EOSLimiarSubsystem.h"
 
-#include "OnlineSessionSettings.h"
+
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
-#include "Logging/StructuredLog.h"
-#include "Online/OnlineSessionNames.h"
+
 
 void UEOSLimiarSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -16,11 +15,10 @@ void UEOSLimiarSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	IdentityPtr = SubsystemPtr->GetIdentityInterface();
     SessionPtr=SubsystemPtr->GetSessionInterface();
 
+	LoginEOS();
 }
 void UEOSLimiarSubsystem::Deinitialize()
 {
-	//SubsystemPtr->Shutdown();
-	//IdentityPtr->Logout(0);
 	
 }
 
@@ -60,61 +58,7 @@ void UEOSLimiarSubsystem::LoginEOS()
             IdentityPtr->ClearOnLoginCompleteDelegate_Handle(0, LoginDelegateHandle);
             LoginDelegateHandle.Reset();			
         }        
-	}
-    
-    
-	
-}
-
-void UEOSLimiarSubsystem::CreateEOSSession()
-{
-	if (IdentityPtr->GetLoginStatus(0)!=ELoginStatus::LoggedIn )
-	{
-		UE_LOGFMT(LogCore, Warning, "Cant Create Session!, Not LoggedIn!");
-		return;
-	}
-
-    if (SubsystemPtr)
-	{
-		 if (SessionPtr)
-		 {
-			FOnlineSessionSettings SessionSettings;
-            SessionSettings.bIsDedicated=false;
-            SessionSettings.bShouldAdvertise=true;
-            SessionSettings.bIsLANMatch=false;
-            SessionSettings.NumPublicConnections=5;
-            SessionSettings.bAllowJoinInProgress=true;
-            SessionSettings.bAllowInvites=true;
-            SessionSettings.bAllowJoinViaPresence=true;
-            SessionSettings.bUsesPresence=true;
-			SessionSettings.bUseLobbiesIfAvailable=true;
-			SessionSettings.Set(SEARCH_KEYWORDS,FString("CubeRage"),EOnlineDataAdvertisementType::ViaOnlineService);
-
-            SessionPtr->OnCreateSessionCompleteDelegates.AddWeakLambda(this,[this](FName SessionName, bool bWasSuccessful)
-            {
-	            if (SubsystemPtr)
-	            {
-		            if (SessionPtr)
-		            {
-                        UE_LOG(LogTemp,Warning,TEXT("Createsessionnnnnnn"));
-			            SessionPtr->ClearOnCreateSessionCompleteDelegates(this);
-		            }
-	            }
-            });
-
-            SessionPtr->CreateSession(0,FName("CubeRage"),SessionSettings);
-			
-		 }
-        
-	}
-}
-
-void UEOSLimiarSubsystem::ShowInviteUI()
-{
-	if (IsPlayerLogged() && GetOnlineSubsystemPtr())
-	{
-		GetOnlineSubsystemPtr()->GetExternalUIInterface()->ShowInviteUI(0,FName("CubeRage"));
-	}
+	} 
 }
 
 bool UEOSLimiarSubsystem::IsPlayerLogged()

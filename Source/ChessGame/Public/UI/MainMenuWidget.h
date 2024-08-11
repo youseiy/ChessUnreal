@@ -14,14 +14,14 @@ UCLASS()
 class CHESSGAME_API UMainMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
-
-private:
+public:
+	UFUNCTION(BlueprintNativeEvent)
+	void CreateGame();
+	UFUNCTION(BlueprintNativeEvent)
+	void FindGame();
+protected:
 	virtual void NativeConstruct() override;
-
 	
-
-private:
 	UFUNCTION()
 	void OnCreateGameButtonClicked();
 	UFUNCTION()

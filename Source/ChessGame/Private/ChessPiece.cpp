@@ -60,7 +60,7 @@ void AChessPiece::SetCurrentBoardID(const FVector2D& BoardID)
 
 FGameplayTag AChessPiece::GetTeam() const
 {
-	return DefaultBoardID.X==0 || DefaultBoardID.X==1? TAG_Team_White:TAG_Team_Black;
+	return DefaultBoardID.X==0 || DefaultBoardID.X==1? ChessGameplayTags::TAG_Team_White:ChessGameplayTags::TAG_Team_Black;
 }
 
 // Called when the game starts or when spawned

@@ -13,6 +13,11 @@
 			"Name": "OSSBlueprintAsync",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "LoadingScreenRuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -24,11 +29,31 @@
 			]
 		},
 		{
+			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineServicesEOS",
+			"Enabled": true
+		},
+		{
 			"Name": "OnlineSubsystemSteam",
 			"Enabled": true
 		},
 		{
-			"Name": "CommonUI",
+			"Name": "OnlineServicesEOSGS",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemEOS",
+			"Enabled": true
+		},
+		{
+			"Name": "SteamSockets",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineServicesNull",
 			"Enabled": true
 		}
 	]

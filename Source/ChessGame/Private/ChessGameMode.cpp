@@ -26,7 +26,6 @@ void AChessGameMode::OnCheckPlayersReady()
 	UE_LOGFMT(LogChessGameMode,Warning,"Players Ready: {a}",PlayersReady);
 	if (PlayersReady>=2)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(PlayersReadyTimerHandle);
 		//INIT GAME! 
 		GetGameState<AChessGameState>()->Server_InitGame(BoardClass);
 	}
@@ -36,18 +35,36 @@ void AChessGameMode::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	OnPlayerReady.BindWeakLambda(this,[this]()
-	{
-		PlayersReady++;
-	});
 	
-	GetWorld()->GetTimerManager().SetTimer(PlayersReadyTimerHandle,FTimerDelegate::CreateUObject(this,&ThisClass::OnCheckPlayersReady),0.1f,true);
 }
 
 void AChessGameMode::GameWelcomePlayer(UNetConnection* Connection, FString& RedirectURL)
 {
 	Super::GameWelcomePlayer(Connection, RedirectURL);
 	
+}
+
+void AChessGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OnPlayerReady.BindWeakLambda(this,[this]()
+	{
+		PlayersReady++;
+		if (PlayersReady>=2)
+		{
+			GetWorld()->GetFirstPlayerController()->GetHUD<AChessHUD>()->RemoveFromViewport(ChessGameplayTags::TAG_Widget_WaitingforPlayers);
+			//INIT GAME! 
+			GetGameState<AChessGameState>()->Server_InitGame(BoardClass);
+		}
+		else
+		{
+			
+			GetWorld()->GetFirstPlayerController()->GetHUD<AChessHUD>()->AddToViewport(ChessGameplayTags::TAG_Widget_WaitingforPlayers);
+			
+			
+		}
+	});
 }
 
 void AChessGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,
@@ -59,21 +76,17 @@ void AChessGameMode::PreLogin(const FString& Options, const FString& Address, co
 
 void AChessGameMode::OnPostLogin(AController* NewPlayer)
 {
-
-	//Super::OnPostLogin(NewPlayer);
-	
-
 	FGameplayTag PlayerTeamTag;
 	
 	//Determine player team based on rand bool 50/50
 	if(!bIsWhiteSelected)
 	{
-		PlayerTeamTag =TAG_Team_White;
-		bIsWhiteSelected=PlayerTeamTag.MatchesTagExact(TAG_Team_White);
+		PlayerTeamTag =ChessGameplayTags::TAG_Team_White;
+		bIsWhiteSelected=PlayerTeamTag.MatchesTagExact(ChessGameplayTags::TAG_Team_White);
 	}
 	else
 	{
-		PlayerTeamTag=TAG_Team_Black;
+		PlayerTeamTag=ChessGameplayTags::TAG_Team_Black;
 	}
 	
 
@@ -109,5 +122,7 @@ void AChessGameMode::OnPostLogin(AController* NewPlayer)
 
 	// Possess the pawn
 	NewPlayer->Possess(NewPawn);
+
+	
 	
 }

@@ -10,10 +10,12 @@
 #include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
+#include "Blueprint/UserWidget.h"
 #include "ChessGame/ChessGame.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"
+#include "UI/ChessHUD.h"
 
 AChessPlayerController::AChessPlayerController()
 {
@@ -32,6 +34,9 @@ void AChessPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 void AChessPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	
+
+	
 	
 }
 
@@ -77,11 +82,6 @@ void AChessPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	
-
-	if (HasAuthority())
-	{
-		GetPlayerState<AChessPlayerState>()->OnPlayerReady.ExecuteIfBound();
-	}
 	GetPlayerState<AChessPlayerState>()->OnPlayerReady.ExecuteIfBound();
 }
 

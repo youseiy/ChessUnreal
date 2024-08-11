@@ -16,6 +16,6 @@ public class ChessGameEditorTarget : TargetRules
 
 	private void RegisterModulesCreatedByRider()
 	{
-		ExtraModuleNames.AddRange(new string[] { "OSSBlueprintAsync" });
+		ExtraModuleNames.AddRange(new string[] { "OSSBlueprintAsync", "LoadingScreenRuntime" });
 	}
 }

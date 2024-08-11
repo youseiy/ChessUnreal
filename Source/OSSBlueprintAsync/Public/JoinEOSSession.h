@@ -14,7 +14,7 @@ UCLASS()
 class OSSBLUEPRINTASYNC_API UJoinEOSSession : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
-
+	UPROPERTY()
 	class UEOSLimiarSubsystem* EOSSubsystem=nullptr;
 
 	UPROPERTY()

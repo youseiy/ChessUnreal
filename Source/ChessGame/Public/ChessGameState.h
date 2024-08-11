@@ -46,6 +46,8 @@ public:
 	FGameplayTag GetTurn() const{return CurrentTurn;}
 
 	void Server_SetCurrentTurn(FGameplayTag NewTurn);
+
+	TArray<class AChessPiece*> Server_GetAllOpponentPieces(bool isWhite) const;
 	
 	UFUNCTION(Server,Reliable)
 	void Server_SetChessBoard(AChessBoard* Board);

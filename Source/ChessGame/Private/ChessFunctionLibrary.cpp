@@ -13,5 +13,5 @@ FGameplayTag UChessFunctionLibrary::EvaluatePieceTeam(const AChessPiece* Piece,c
 	
 	const auto DefaultBoardID=Piece->GetDefaultBoardID();
 	
-	return DefaultBoardID.X==0 || DefaultBoardID.X==1? TAG_Team_White:TAG_Team_Black;
+	return DefaultBoardID.X==0 || DefaultBoardID.X==1? ChessGameplayTags::TAG_Team_White:ChessGameplayTags::TAG_Team_Black;
 }

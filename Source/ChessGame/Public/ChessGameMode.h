@@ -6,6 +6,7 @@
 #include "GameFramework/GameMode.h"
 #include "ChessGameMode.generated.h"
 
+
 class AChessBoard;
 class AChessPlayerPawn;
 /**
@@ -24,13 +25,12 @@ class CHESSGAME_API AChessGameMode : public AGameModeBase
 	bool bIsBlackSelected=false;
 
 	int32 PlayersReady{0};
-	
-	FTimerHandle PlayersReadyTimerHandle;
 
 	void OnCheckPlayersReady();
 protected:
 	virtual void PostInitializeComponents() override;
 	virtual void GameWelcomePlayer(UNetConnection* Connection, FString& RedirectURL) override;
+	virtual void BeginPlay() override;
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	virtual void OnPostLogin(AController* NewPlayer) override;
 
