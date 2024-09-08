@@ -10,7 +10,6 @@ This is a chess project developed using Unreal Engine and C++. The primary goal 
 
 - **Piece Movement**: Chess pieces can be moved according to the official game rules.
 - **Online Multiplayer**: Support for online matches using Unreal Engine's Online Subsystem.
-- **Crossplay Support**: Players can compete across different platforms, providing a seamless and integrated gaming experience.
 
 ### Features in Development
 
@@ -19,3 +18,5 @@ This is a chess project developed using Unreal Engine and C++. The primary goal 
 - **Check and Checkmate**: The system correctly detects check and checkmate situations during matches.
 - **Castling**: Implementation of the special castling move according to official chess rules.
 - **Loading Screen**: Implementation of a loading screen to improve the user experience during transitions and loading times.
+
+![Captura de ecrã 2024-07-01 210149](https://github.com/user-attachments/assets/9a0e2283-96e5-4336-9c80-d9407f4c30d5)
